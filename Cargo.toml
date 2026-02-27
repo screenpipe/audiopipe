@@ -1,0 +1,29 @@
+[package]
+name = "audiopipe"
+version = "0.1.0"
+edition = "2021"
+description = "Fast speech-to-text inference in Rust. Qwen3-ASR, CoreML (ANE), DirectML, CUDA."
+license = "MIT"
+repository = "https://github.com/screenpipe/audiopipe"
+
+[dependencies]
+ort = { version = "=2.0.0-rc.6", default-features = false, features = ["half"] }
+hf-hub = "0.3.2"
+ndarray = "0.16"
+realfft = "3"
+thiserror = "1"
+tracing = "0.1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+half = "2"
+
+[features]
+default = []
+
+# Execution providers — pick one (or none for CPU)
+cuda = ["ort/cuda"]
+coreml = ["ort/coreml"]
+directml = ["ort/directml"]
+
+# Models
+qwen3-asr = []
