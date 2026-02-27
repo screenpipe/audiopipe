@@ -19,7 +19,7 @@ use crate::model::{Engine, TranscribeOptions, TranscribeResult};
 
 use half::f16;
 use ndarray::{Array2, ArrayD, IxDyn};
-use ort::session::Session;
+use ort::Session;
 use std::path::Path;
 
 /// Qwen3-ASR model config (from config.json).
