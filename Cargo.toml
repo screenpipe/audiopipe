@@ -1,10 +1,10 @@
 [package]
-name = "stt"
-version = "0.1.0"
+name = "audiopipe"
+version = "0.2.0"
 edition = "2021"
-description = "Fast speech-to-text inference in Rust. CoreML (ANE), DirectML, CUDA."
+description = "Fast speech-to-text inference in Rust. Metal, Vulkan, CUDA, CoreML, DirectML."
 license = "MIT"
-repository = "https://github.com/screenpipe/stt"
+repository = "https://github.com/screenpipe/audiopipe"
 keywords = ["speech-to-text", "asr", "whisper", "parakeet", "onnx"]
 categories = ["multimedia::audio", "science"]
 
