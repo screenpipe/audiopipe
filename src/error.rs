@@ -4,6 +4,7 @@
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[cfg(feature = "onnx-deps")]
     #[error("onnx runtime: {0}")]
     Ort(#[from] ort::Error),
 

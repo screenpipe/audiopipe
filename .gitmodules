@@ -1,0 +1,3 @@
+[submodule "qwen3-asr-sys/qwen3-asr.cpp"]
+	path = qwen3-asr-sys/qwen3-asr.cpp
+	url = https://github.com/predict-woo/qwen3-asr.cpp

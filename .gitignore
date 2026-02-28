@@ -1,0 +1,6 @@
+target/
+*.wav
+*.onnx
+*.onnx.data
+*.npy
+qwen3-asr-0.6b-onnx-fp16/

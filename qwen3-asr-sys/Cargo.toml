@@ -1,0 +1,18 @@
+[package]
+name = "qwen3-asr-sys"
+version = "0.1.0"
+edition = "2021"
+description = "FFI bindings to qwen3-asr.cpp (GGML-based Qwen3-ASR inference)"
+license = "MIT"
+links = "qwen3_asr"
+build = "build.rs"
+
+[build-dependencies]
+cmake = "0.1"
+cc = "1"
+
+[features]
+default = []
+metal = []
+vulkan = []
+cuda = []
