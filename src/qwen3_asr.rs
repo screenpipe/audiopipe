@@ -22,6 +22,38 @@ use ndarray::{Array2, ArrayD, IxDyn};
 use ort::Session;
 use std::path::Path;
 
+/// Create a session builder with the best available execution provider.
+/// Falls back to CPU if no GPU EP feature is enabled.
+fn session_builder() -> std::result::Result<ort::SessionBuilder, ort::Error> {
+    let builder = Session::builder()?;
+
+    #[cfg(feature = "coreml")]
+    let builder = {
+        tracing::info!("qwen3-asr: using CoreML execution provider");
+        builder.with_execution_providers(vec![
+            ort::CoreMLExecutionProvider::default().build(),
+        ])?
+    };
+
+    #[cfg(feature = "cuda")]
+    let builder = {
+        tracing::info!("qwen3-asr: using CUDA execution provider");
+        builder.with_execution_providers(vec![
+            ort::CUDAExecutionProvider::default().build(),
+        ])?
+    };
+
+    #[cfg(feature = "directml")]
+    let builder = {
+        tracing::info!("qwen3-asr: using DirectML execution provider");
+        builder.with_execution_providers(vec![
+            ort::DirectMLExecutionProvider::default().build(),
+        ])?
+    };
+
+    Ok(builder)
+}
+
 /// Qwen3-ASR model config (from config.json).
 #[derive(Debug, Clone, serde::Deserialize)]
 struct ModelConfig {
@@ -277,11 +309,11 @@ impl Qwen3AsrEngine {
 
         tracing::info!("loading Qwen3-ASR from {}", dir.display());
 
-        let conv_stem = Session::builder()
+        let conv_stem = session_builder()
             .map_err(ort_err)?
             .commit_from_file(dir.join("conv_stem.onnx"))
             .map_err(ort_err)?;
-        let encoder = Session::builder()
+        let encoder = session_builder()
             .map_err(ort_err)?
             .commit_from_file(dir.join("encoder.onnx"))
             .map_err(ort_err)?;
@@ -290,14 +322,14 @@ impl Qwen3AsrEngine {
         let kv_path = dir.join("decoder_kv.onnx");
         let (decoder, has_kv_cache) = if kv_path.exists() {
             tracing::info!("using KV-cache decoder");
-            let sess = Session::builder()
+            let sess = session_builder()
                 .map_err(ort_err)?
                 .commit_from_file(&kv_path)
                 .map_err(ort_err)?;
             (sess, true)
         } else {
             tracing::info!("using legacy decoder (no KV cache)");
-            let sess = Session::builder()
+            let sess = session_builder()
                 .map_err(ort_err)?
                 .commit_from_file(dir.join("decoder.onnx"))
                 .map_err(ort_err)?;
