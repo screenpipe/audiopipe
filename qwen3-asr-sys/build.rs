@@ -68,6 +68,11 @@ fn main() {
         .define("GGML_BUILD_EXAMPLES", "OFF")
         .define("GGML_OPENMP", "OFF");
 
+    // GGML uses std::filesystem::path which requires macOS 10.15+
+    if target_os == "macos" {
+        ggml_cfg.define("CMAKE_OSX_DEPLOYMENT_TARGET", "10.15");
+    }
+
     // Metal
     if use_metal {
         ggml_cfg.define("GGML_METAL", "ON");
@@ -138,6 +143,7 @@ fn main() {
 
     if target_os == "macos" {
         asr_build.flag("-DACCELERATE_NEW_LAPACK");
+        asr_build.flag("-mmacosx-version-min=10.15");
     }
 
     if target_os == "windows" {
@@ -160,6 +166,10 @@ fn main() {
         .include(&src_dir)
         .include(&ggml_include)
         .file(manifest_dir.join("wrapper.cpp"));
+
+    if target_os == "macos" {
+        wrapper_build.flag("-mmacosx-version-min=10.15");
+    }
 
     if target_os == "windows" {
         wrapper_build.include(&compat_dir);
