@@ -9,7 +9,7 @@ keywords = ["speech-to-text", "asr", "whisper", "parakeet", "onnx"]
 categories = ["multimedia::audio", "science"]
 
 [dependencies]
-ort = { version = "2.0.0-rc.11", default-features = false, features = ["std", "ndarray", "half"], optional = true }
+ort = { version = "2.0.0-rc.6", default-features = false, features = ["ndarray", "half"], optional = true }
 hf-hub = "0.4"
 ndarray = { version = "0.17", optional = true }
 realfft = { version = "3", optional = true }
