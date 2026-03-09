@@ -25,6 +25,7 @@ use std::process::Command;
 // ═══════════════════════════════════════════════════════════════════════════
 
 fn main() {
+    let target = std::env::var("TARGET").unwrap_or_default();
     let target_os = std::env::var("CARGO_CFG_TARGET_OS").unwrap_or_default();
     let target_arch = std::env::var("CARGO_CFG_TARGET_ARCH").unwrap_or_default();
     let manifest_dir = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
@@ -62,6 +63,31 @@ fn main() {
 
     // ── 1. Build GGML via cmake ───────────────────────────────────────────
     let mut ggml_cfg = cmake::Config::new(&ggml_root);
+
+    // Windows ARM64: use Clang via toolchain so ggml's ARM NEON code is built (MSVC not supported for ARM).
+    let is_windows_arm64 = target == "aarch64-pc-windows-msvc";
+    if is_windows_arm64 {
+        let toolchain = manifest_dir
+            .join("cmake")
+            .join("arm64-windows-msvc-clang.toolchain.cmake");
+        if toolchain.exists() {
+            let toolchain_str = toolchain.to_string_lossy().replace('\\', "/");
+            ggml_cfg.define("CMAKE_TOOLCHAIN_FILE", &toolchain_str);
+            ggml_cfg.generator("Ninja");
+            if cfg!(feature = "vulkan") {
+                ggml_cfg.define("GGML_VULKAN_SHADERS_GEN_TOOLCHAIN", &toolchain_str);
+            }
+        } else {
+            panic!(
+                "Windows ARM64 (aarch64-pc-windows-msvc) requires Clang. \
+                 Toolchain file not found: {}. \
+                 Install the \"C++ Clang compiler for Windows\" component in Visual Studio (or LLVM) \
+                 and ensure clang-cl and ninja are on PATH.",
+                toolchain.display()
+            );
+        }
+    }
+
     ggml_cfg
         .define("BUILD_SHARED_LIBS", "OFF")
         .define("GGML_BUILD_TESTS", "OFF")
