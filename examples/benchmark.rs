@@ -83,16 +83,16 @@ fn run_model(
     let audio_secs = audio.len() as f64 / sample_rate as f64;
 
     let load_start = std::time::Instant::now();
-    let mut model = stt::Model::from_pretrained(model_name)?;
+    let mut model = audiopipe::Model::from_pretrained(model_name)?;
     let load_secs = load_start.elapsed().as_secs_f64();
 
     // Warmup run (first run may have allocation overhead)
-    let _ = model.transcribe_with_sample_rate(audio, sample_rate, stt::TranscribeOptions::default());
+    let _ = model.transcribe_with_sample_rate(audio, sample_rate, audiopipe::TranscribeOptions::default());
 
     // Timed run
     let start = std::time::Instant::now();
     let result =
-        model.transcribe_with_sample_rate(audio, sample_rate, stt::TranscribeOptions::default())?;
+        model.transcribe_with_sample_rate(audio, sample_rate, audiopipe::TranscribeOptions::default())?;
     let transcribe_secs = start.elapsed().as_secs_f64();
 
     Ok(BenchResult {
