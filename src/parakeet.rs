@@ -78,6 +78,15 @@ impl ParakeetEngine {
     }
 }
 
+/// Helper to extract f32 tensor from ort output as a raw shape + data.
+fn extract_f32(val: &ort::value::DynValue) -> Result<(Vec<usize>, Vec<f32>)> {
+    let (shape, data) = val
+        .try_extract_tensor::<f32>()
+        .map_err(|e| Error::Other(format!("extract tensor: {e}")))?;
+    let dims: Vec<usize> = (0..shape.len()).map(|i| shape[i] as usize).collect();
+    Ok((dims, data.to_vec()))
+}
+
 impl Engine for ParakeetEngine {
     fn transcribe(&mut self, audio_samples: &[f32], sample_rate: u32, _opts: &TranscribeOptions) -> Result<TranscribeResult> {
         let audio = if sample_rate != 16000 {
@@ -103,12 +112,9 @@ impl Engine for ParakeetEngine {
             "length" => ort::value::Value::from_array(input_len)?
         ))?;
 
-        let (enc_shape, enc_data) = enc_out["outputs"]
-            .try_extract_tensor::<f32>()
-            .map_err(|e| Error::Other(format!("encoder output: {e}")))?;
-        let dims = enc_shape.as_ref();
-        let (b, enc_t, enc_d) = (dims[0] as usize, dims[1] as usize, dims[2] as usize);
-        let enc_array = Array3::from_shape_vec((b, enc_t, enc_d), enc_data.to_vec())
+        let (enc_shape, enc_data) = extract_f32(&enc_out["outputs"])?;
+        let (b, enc_t, enc_d) = (enc_shape[0], enc_shape[1], enc_shape[2]);
+        let enc_array = Array3::from_shape_vec((b, enc_t, enc_d), enc_data)
             .map_err(|e| Error::Other(format!("encoder array: {e}")))?;
 
         // Greedy TDT decode
@@ -185,9 +191,7 @@ fn greedy_tdt_decode(
             "input_states_2" => ort::value::Value::from_array(state_c.clone())?
         ))?;
 
-        let (_, logits) = out["outputs"]
-            .try_extract_tensor::<f32>()
-            .map_err(|e| Error::Other(format!("logits: {e}")))?;
+        let (_, logits) = extract_f32(&out["outputs"])?;
 
         let token_id = logits.iter().take(vocab_size)
             .enumerate()
@@ -202,19 +206,13 @@ fn greedy_tdt_decode(
             .unwrap_or(0);
 
         if token_id != blank_id {
-            if let Ok((sh, sd)) = out["output_states_1"].try_extract_tensor::<f32>() {
-                let d = sh.as_ref();
-                if let Ok(arr) = Array3::from_shape_vec(
-                    (d[0] as usize, d[1] as usize, d[2] as usize), sd.to_vec(),
-                ) {
+            if let Ok((sh, sd)) = extract_f32(&out["output_states_1"]) {
+                if let Ok(arr) = Array3::from_shape_vec((sh[0], sh[1], sh[2]), sd) {
                     state_h = arr;
                 }
             }
-            if let Ok((sh, sd)) = out["output_states_2"].try_extract_tensor::<f32>() {
-                let d = sh.as_ref();
-                if let Ok(arr) = Array3::from_shape_vec(
-                    (d[0] as usize, d[1] as usize, d[2] as usize), sd.to_vec(),
-                ) {
+            if let Ok((sh, sd)) = extract_f32(&out["output_states_2"]) {
+                if let Ok(arr) = Array3::from_shape_vec((sh[0], sh[1], sh[2]), sd) {
                     state_c = arr;
                 }
             }
