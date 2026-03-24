@@ -9,9 +9,10 @@ keywords = ["speech-to-text", "asr", "whisper", "parakeet", "onnx"]
 categories = ["multimedia::audio", "science"]
 
 [dependencies]
-ort = { version = "2.0.0-rc.6", default-features = false, features = ["ndarray", "half"], optional = true }
+ort = { version = "=2.0.0-rc.6", default-features = false, features = ["ndarray", "half"], optional = true }
+ort-sys = { version = "=2.0.0-rc.6", default-features = false, optional = true }
 hf-hub = "0.4"
-ndarray = { version = "0.17", optional = true }
+ndarray = { version = "0.16", optional = true }
 realfft = { version = "3", optional = true }
 thiserror = "2"
 tracing = "0.1"
@@ -50,7 +51,7 @@ path = "examples/bench_asr.rs"
 default = ["ort-defaults"]
 
 # ONNX Runtime deps (needed for parakeet, qwen3-asr ONNX engines)
-onnx-deps = ["dep:ort", "dep:ndarray", "dep:realfft", "dep:half"]
+onnx-deps = ["dep:ort", "dep:ort-sys", "dep:ndarray", "dep:realfft", "dep:half"]
 ort-defaults = ["onnx-deps", "ort/default"]
 
 # Execution providers — pick one (or none for CPU)
