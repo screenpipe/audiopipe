@@ -27,6 +27,7 @@ impl WhisperEngine {
             _ => return Err(Error::ModelNotFound(format!("unknown whisper model: {}", name))),
         };
 
+
         let api = hf_hub::api::sync::Api::new()
             .map_err(|e| Error::Download(e.to_string()))?;
         let repo = api.model(repo_name.to_string());

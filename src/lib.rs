@@ -36,3 +36,4 @@ pub mod qwen3_asr_antirez;
 
 pub use error::Error;
 pub use model::{Model, Segment, TranscribeOptions, TranscribeResult};
+

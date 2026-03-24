@@ -34,7 +34,7 @@ impl ParakeetEngine {
 
         let encoder_file = model.get("encoder-model.onnx")
             .map_err(|e| Error::Download(format!("encoder: {e}")))?;
-        let model_dir = encoder_file.parent().unwrap_or(Path::new(".")).to_path_buf();
+        let model_dir = encoder_file.parent().unwrap_or(std::path::Path::new(".")).to_path_buf();
 
         // Download all required files
         for f in &["decoder_joint-model.onnx", "vocab.txt"] {

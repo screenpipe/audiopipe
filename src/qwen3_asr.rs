@@ -417,6 +417,7 @@ impl Qwen3AsrEngine {
             _ => return Err(Error::ModelNotFound(format!("unknown Qwen3-ASR model: {}", name))),
         };
 
+
         let api = hf_hub::api::sync::Api::new()
             .map_err(|e| Error::Download(e.to_string()))?;
         let repo = api.model(repo_name.to_string());

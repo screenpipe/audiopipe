@@ -40,6 +40,7 @@ impl Qwen3AsrGgmlEngine {
             }
         };
 
+
         let api =
             hf_hub::api::sync::Api::new().map_err(|e| Error::Download(e.to_string()))?;
         let repo = api.model(repo_name.to_string());
