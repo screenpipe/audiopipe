@@ -16,6 +16,7 @@ use mlx_rs::error::Result;
 use mlx_rs::module::{Module, Param};
 use mlx_rs::nn::{BatchNorm, BatchNormBuilder, Conv1d, Conv1dBuilder, Conv2d, Conv2dBuilder,
                   LayerNorm, LayerNormBuilder, Linear, LinearBuilder};
+use mlx_rs::ops::indexing::IndexOp;
 use mlx_rs::ops::{expand_dims, zeros};
 use mlx_rs::{Array, Dtype};
 use std::collections::HashMap;
@@ -47,7 +48,7 @@ impl FeedForward {
 
     pub fn forward(&mut self, x: &Array) -> Result<Array> {
         let x = self.linear1.forward(x)?;
-        let x = mlx_rs::ops::silu(&x)?;
+        let x = mlx_rs::nn::silu(&x)?;
         self.linear2.forward(&x)
     }
 
@@ -144,7 +145,7 @@ impl Convolution {
 
         // batch_norm -> SiLU -> pointwise_conv2
         let x = self.batch_norm.forward(&x)?;
-        let x = mlx_rs::ops::silu(&x)?;
+        let x = mlx_rs::nn::silu(&x)?;
         self.pointwise_conv2.forward(&x)
     }
 
@@ -168,10 +169,10 @@ impl Convolution {
             self.batch_norm.bias = Param::new(Some(b.clone()));
         }
         if let Some(m) = weights.get(&format!("{prefix}.batch_norm.running_mean")) {
-            self.batch_norm.running_mean = Param::new(m.clone());
+            self.batch_norm.running_mean = Param::new(Some(m.clone()));
         }
         if let Some(v) = weights.get(&format!("{prefix}.batch_norm.running_var")) {
-            self.batch_norm.running_var = Param::new(v.clone());
+            self.batch_norm.running_var = Param::new(Some(v.clone()));
         }
         if let Some(w) = weights.get(&format!("{prefix}.pointwise_conv2.weight")) {
             self.pointwise_conv2.weight = Param::new(w.clone());
@@ -412,7 +413,7 @@ impl DwStridingSubsampling {
             // In the Python: ReLU after indices 0, then after each pointwise (indices 3, 6)
             // In our vec: indices 0, 2, 4 are followed by ReLU
             if i == 0 || i % 2 == 0 {
-                x = mlx_rs::ops::relu(&x)?;
+                x = mlx_rs::nn::relu(&x)?;
             }
         }
 
@@ -574,6 +575,10 @@ impl Conformer {
     /// Expected prefix: `"encoder"` (so keys are `encoder.pre_encode.*`,
     /// `encoder.layers.0.*`, etc.)
     pub fn load_weights(&mut self, weights: &HashMap<String, Array>, prefix: &str) {
+        // Count how many weights we actually loaded
+        let total_encoder_keys = weights.keys().filter(|k| k.starts_with(prefix)).count();
+        tracing::info!("Conformer: {} weight keys match prefix '{}'", total_encoder_keys, prefix);
+
         // Subsampling weights
         self.pre_encode
             .load_weights(weights, &format!("{prefix}.pre_encode"));
@@ -582,6 +587,10 @@ impl Conformer {
         for (i, layer) in self.layers.iter_mut().enumerate() {
             layer.load_weights(weights, &format!("{prefix}.layers.{i}"));
         }
+
+        // Verify: count loaded keys
+        let loaded = weights.keys().filter(|k| k.starts_with(prefix)).count();
+        tracing::info!("Conformer: loaded weights for {} layers", self.layers.len());
     }
 }
 

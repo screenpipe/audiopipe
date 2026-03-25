@@ -70,7 +70,13 @@ pub fn greedy_tdt_decode(
     let mut t: usize = 0;
     let mut symbols_per_step: usize = 0;
 
+    tracing::info!("TDT decode: t_len={}, blank_id={}, vocab_size_plus_blank={}, n_durations={}",
+        t_len, blank_id, vocab_size_plus_blank, durations.len());
+
     while t < t_len {
+        if t < 3 || t % 100 == 0 {
+            tracing::debug!("step t={}/{} tokens_emitted={}", t, t_len, aligned_tokens.len());
+        }
         // --- Prediction (decoder) step ---
         let (pred_out, new_h, new_c) = match &last_token {
             Some(tok) => predict.predict_step(
@@ -107,14 +113,14 @@ pub fn greedy_tdt_decode(
         let token_id = {
             let token_logits_2d = token_logits.reshape(&[1, -1])?;
             let idx = argmax_axis(&token_logits_2d, -1, false)?;
-            let idx_flat: Vec<i32> = idx.as_slice().to_vec();
+            let idx_flat: Vec<u32> = idx.as_slice().to_vec();
             idx_flat[0] as usize
         };
 
         let duration_idx = {
             let dur_logits_2d = duration_logits.reshape(&[1, -1])?;
             let idx = argmax_axis(&dur_logits_2d, -1, false)?;
-            let idx_flat: Vec<i32> = idx.as_slice().to_vec();
+            let idx_flat: Vec<u32> = idx.as_slice().to_vec();
             idx_flat[0] as usize
         };
 
@@ -124,6 +130,10 @@ pub fn greedy_tdt_decode(
             // Fallback: if index is out of range, advance by 1
             1
         };
+
+        if t < 3 {
+            tracing::debug!("  token_id={}, duration_idx={} (dur={}), blank_id={}", token_id, duration_idx, duration, blank_id);
+        }
 
         // --- TDT decoding rule ---
         if token_id != blank_id {

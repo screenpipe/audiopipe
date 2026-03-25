@@ -10,6 +10,7 @@
 
 pub mod attention;
 pub mod audio;
+pub mod conformer;
 pub mod decode;
 pub mod rnnt;
 
@@ -64,6 +65,7 @@ const HF_REPO: &str = "mlx-community/parakeet-tdt-0.6b-v3";
 
 /// Parakeet TDT engine using MLX for inference on Apple Silicon.
 pub struct ParakeetMlxEngine {
+    conformer: conformer::Conformer,
     predict: PredictNetwork,
     joint: JointNetwork,
     mel_config: MelConfig,
@@ -129,6 +131,21 @@ impl ParakeetMlxEngine {
         tracing::info!("loaded vocabulary: {} tokens", vocab.len());
 
         // --- Build networks ---
+        let mut encoder = conformer::Conformer::new(
+            128,   // feat_in (mel features)
+            24,    // n_layers
+            1024,  // d_model
+            8,     // n_heads
+            4,     // ff_expansion_factor
+            8,     // subsampling_factor
+            9,     // conv_kernel_size
+            256,   // subsampling_conv_channels
+            5000,  // pos_emb_max_len
+            false, // use_bias
+            false, // xscaling
+        )
+        .map_err(|e| Error::Other(format!("failed to create Conformer: {e}")))?;
+
         let mut predict = PredictNetwork::new(
             (VOCAB_SIZE as i32) + 1, // 8193: vocab + blank
             PRED_EMBED,
@@ -152,8 +169,7 @@ impl ParakeetMlxEngine {
             .load_weights(&weights)
             .map_err(|e| Error::Other(format!("failed to load joint weights: {e}")))?;
 
-        // Note: Conformer weights are also in `weights` but the Conformer
-        // struct is not yet implemented. When it is, load its weights here.
+        encoder.load_weights(&weights, "encoder");
 
         let mel_config = MelConfig::default();
         let time_ratio = SUBSAMPLING_FACTOR as f64
@@ -161,6 +177,7 @@ impl ParakeetMlxEngine {
             * mel_config.hop_length as f64;
 
         Ok(Self {
+            conformer: encoder,
             predict,
             joint,
             mel_config,
@@ -202,16 +219,9 @@ impl Engine for ParakeetMlxEngine {
         let mel = get_logmel(&audio_arr, &self.mel_config)
             .map_err(|e| Error::Other(format!("mel computation failed: {e}")))?;
 
-        // --- Conformer encoder ---
-        // TODO: Run the Conformer encoder once it is implemented.
-        // For now, this is a placeholder that expects `mel` to already be
-        // encoder output (useful for testing with pre-computed features).
-        //
-        // let (encoder_out, _lengths) = self.conformer.forward(&mel)?;
-        //
-        // Until the Conformer is ported, we pass mel directly. This will
-        // produce incorrect results but allows the decode path to be tested.
-        let encoder_out = mel;
+        // --- Conformer encoder: [1, T, 128] -> [1, T/8, 1024] ---
+        let (encoder_out, _lengths) = self.conformer.forward(&mel, None)
+            .map_err(|e| Error::Other(format!("encoder failed: {e}")))?;
 
         // --- TDT greedy decode ---
         let (text, segments) = greedy_tdt_decode(

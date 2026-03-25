@@ -60,6 +60,12 @@ impl Model {
     /// - `"whisper-tiny"` / `"whisper-small"` / etc.
     pub fn from_pretrained(name: &str) -> Result<Self> {
         match name {
+            #[cfg(feature = "parakeet-mlx")]
+            n if n.contains("mlx") && n.starts_with("parakeet") => {
+                let base_name = n.replace("-mlx", "");
+                let engine = crate::parakeet_mlx::ParakeetMlxEngine::from_pretrained(&base_name)?;
+                Ok(Self { inner: Box::new(engine) })
+            }
             #[cfg(feature = "parakeet")]
             n if n.starts_with("parakeet") => {
                 let engine = crate::parakeet::ParakeetEngine::from_pretrained(n)?;
