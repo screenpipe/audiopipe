@@ -6,7 +6,7 @@ use crate::audio::{self, MelConfig};
 use crate::error::{Error, Result};
 use crate::model::{Engine, Segment, TranscribeOptions, TranscribeResult};
 use ndarray::{Array1, Array2, Array3};
-use ort::session::Session;
+use ort::Session;
 use std::path::{Path, PathBuf};
 
 /// Parakeet TDT engine using ONNX Runtime.
@@ -102,16 +102,14 @@ fn build_session_with_ep(onnx_path: &std::path::Path) -> Result<Session> {
     // --- DirectML (Windows) ---
     #[cfg(feature = "directml")]
     {
-        let ep = ort::ep::DirectML::default();
+        use ort::DirectMLExecutionProvider;
+        let ep = DirectMLExecutionProvider::default();
         tracing::info!("parakeet: trying DirectML EP for {}", file_name);
 
-        let result = (|| -> std::result::Result<Session, ort::Error> {
-            let builder = Session::builder()?;
-            let builder = builder.with_execution_providers([ep.build()])?;
-            builder.commit_from_file(onnx_path)
-        })();
-
-        match result {
+        match Session::builder()
+            .and_then(|b| b.with_execution_providers([ep.into()]))
+            .and_then(|b| b.commit_from_file(onnx_path))
+        {
             Ok(session) => {
                 tracing::info!("parakeet: {} loaded with DirectML", file_name);
                 return Ok(session);
@@ -128,12 +126,12 @@ fn build_session_with_ep(onnx_path: &std::path::Path) -> Result<Session> {
 }
 
 /// Helper to extract f32 tensor from ort output as a raw shape + data.
-fn extract_f32(val: &ort::value::DynValue) -> Result<(Vec<usize>, Vec<f32>)> {
-    let (shape, data) = val
+fn extract_f32(val: &ort::DynValue) -> Result<(Vec<usize>, Vec<f32>)> {
+    let view = val
         .try_extract_tensor::<f32>()
         .map_err(|e| Error::Other(format!("extract tensor: {e}")))?;
-    let dims: Vec<usize> = shape.iter().map(|&d| d as usize).collect();
-    Ok((dims, data.to_vec()))
+    let dims: Vec<usize> = view.shape().to_vec();
+    Ok((dims, view.iter().copied().collect()))
 }
 
 impl Engine for ParakeetEngine {
@@ -156,10 +154,10 @@ impl Engine for ParakeetEngine {
             .to_owned();
         let input_len = Array1::from_vec(vec![n_frames as i64]);
 
-        let enc_inputs = ort::inputs![
-            "audio_signal" => ort::value::Tensor::from_array(input)?,
-            "length" => ort::value::Tensor::from_array(input_len)?
-        ];
+        let enc_inputs = ort::inputs!(
+            "audio_signal" => ort::Value::from_array(input)?,
+            "length" => ort::Value::from_array(input_len)?
+        )?;
         let enc_out = self.encoder.run(enc_inputs)?;
 
         let (enc_shape, enc_data) = extract_f32(&enc_out["outputs"])?;
@@ -233,13 +231,13 @@ fn greedy_tdt_decode(
         let targets = Array2::from_shape_vec((1, 1), vec![last_token])
             .map_err(|e| Error::Other(format!("targets: {e}")))?;
 
-        let dec_inputs = ort::inputs![
-            "encoder_outputs" => ort::value::Tensor::from_array(frame)?,
-            "targets" => ort::value::Tensor::from_array(targets)?,
-            "target_length" => ort::value::Tensor::from_array(Array1::from_vec(vec![1i32]))?,
-            "input_states_1" => ort::value::Tensor::from_array(state_h.clone())?,
-            "input_states_2" => ort::value::Tensor::from_array(state_c.clone())?
-        ];
+        let dec_inputs = ort::inputs!(
+            "encoder_outputs" => ort::Value::from_array(frame)?,
+            "targets" => ort::Value::from_array(targets)?,
+            "target_length" => ort::Value::from_array(Array1::from_vec(vec![1i32]))?,
+            "input_states_1" => ort::Value::from_array(state_h.clone())?,
+            "input_states_2" => ort::Value::from_array(state_c.clone())?
+        )?;
         let out = decoder.run(dec_inputs)?;
 
         let (_, logits) = extract_f32(&out["outputs"])?;
