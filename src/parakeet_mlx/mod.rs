@@ -125,9 +125,24 @@ impl ParakeetMlxEngine {
     /// - `model.safetensors`
     /// - `vocab.txt` (one token per line)
     pub fn from_dir(dir: &Path, name: &str) -> Result<Self> {
-        // --- Load vocabulary ---
-        let vocab_path = dir.join("vocab.txt");
-        let vocab = load_vocab(&vocab_path)?;
+        // --- Load vocabulary from config.json → joint.vocabulary ---
+        let config_path = dir.join("config.json");
+        let vocab = if config_path.exists() {
+            let config_str = std::fs::read_to_string(&config_path)
+                .map_err(|e| Error::Other(format!("read config.json: {e}")))?;
+            let config: serde_json::Value = serde_json::from_str(&config_str)
+                .map_err(|e| Error::Other(format!("parse config.json: {e}")))?;
+            if let Some(vocab_arr) = config.get("joint").and_then(|j| j.get("vocabulary")).and_then(|v| v.as_array()) {
+                vocab_arr.iter()
+                    .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                    .collect::<Vec<String>>()
+            } else {
+                // Fallback to vocab.txt
+                load_vocab(&dir.join("vocab.txt"))?
+            }
+        } else {
+            load_vocab(&dir.join("vocab.txt"))?
+        };
         tracing::info!("loaded vocabulary: {} tokens", vocab.len());
 
         // --- Build networks ---

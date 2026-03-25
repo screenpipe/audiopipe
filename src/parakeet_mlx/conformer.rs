@@ -174,6 +174,8 @@ impl Convolution {
         if let Some(v) = weights.get(&format!("{prefix}.batch_norm.running_var")) {
             self.batch_norm.running_var = Param::new(Some(v.clone()));
         }
+        // Set eval mode so BatchNorm uses running_mean/running_var instead of batch stats
+        self.batch_norm.training_mode(false);
         if let Some(w) = weights.get(&format!("{prefix}.pointwise_conv2.weight")) {
             self.pointwise_conv2.weight = Param::new(w.clone());
         }
@@ -239,6 +241,17 @@ impl ConformerBlock {
         // FF1: half-step residual
         let normed = self.norm_feed_forward1.forward(x)?;
         let ff1_out = self.feed_forward1.forward(&normed)?;
+        // Debug: log ff1 for first call only (controlled by caller)
+        if tracing::enabled!(tracing::Level::TRACE) {
+            mlx_rs::transforms::eval([&ff1_out]).ok();
+            use mlx_rs::ops::indexing::IndexOp;
+            let f0 = ff1_out.index((0, 0, ..)).flatten(None, None).ok();
+            if let Some(f0) = f0 {
+                mlx_rs::transforms::eval([&f0]).ok();
+                let fv: Vec<f32> = f0.as_slice().to_vec();
+                tracing::trace!("ff1_out[0,0,:5] = [{:.4}, {:.4}, {:.4}, {:.4}, {:.4}]", fv[0], fv[1], fv[2], fv[3], fv[4]);
+            }
+        }
         let x = x + &(&ff1_out * 0.5);
 
         // Self-attention with relative position encoding
@@ -406,20 +419,54 @@ impl DwStridingSubsampling {
         // Apply conv layers with ReLU after each group.
         // Layer arrangement: [conv0, relu, conv2, conv3, relu, conv5, conv6, relu]
         // We apply ReLU after: conv0, conv3 (pointwise), conv6 (pointwise)
-        for (i, (_idx, conv)) in self.conv_layers.iter_mut().enumerate() {
+        for (i, (idx, conv)) in self.conv_layers.iter_mut().enumerate() {
             x = conv.forward(&x)?;
-            // Apply ReLU after: first conv (i=0), each pointwise conv (i=2, i=4 for 8x)
-            // More generally: after first conv and after every even-indexed subsequent conv
-            // In the Python: ReLU after indices 0, then after each pointwise (indices 3, 6)
-            // In our vec: indices 0, 2, 4 are followed by ReLU
+            {
+                mlx_rs::transforms::eval([&x]).ok();
+                let cv: Vec<f32> = x.as_slice().to_vec();
+                tracing::info!("conv[{}] (vec[{}]) out: shape={:?}, range=[{:.4}, {:.4}]",
+                    idx, i, x.shape(),
+                    cv.iter().copied().fold(f32::MAX, f32::min),
+                    cv.iter().copied().fold(f32::MIN, f32::max));
+            }
+            // Apply ReLU after: conv0 (i=0), conv3 (i=2), conv6 (i=4)
             if i == 0 || i % 2 == 0 {
                 x = mlx_rs::nn::relu(&x)?;
             }
         }
 
-        // (B, T', H', C) -> (B, T', H'*C)
+        // Match Python: transpose from (B, T', H', C) to (B, C, T', H'),
+        // then swap axes 1,2 to (B, T', C, H'), then flatten to (B, T', C*H').
+        // This ensures the flatten order matches the pretrained linear weights.
+        let x = x.transpose_axes(&[0, 3, 1, 2])?; // (B, C, T', H')
+        let x = x.swap_axes(1, 2)?;                // (B, T', C, H')
         let t_out = x.shape()[1];
+
+        // Debug: check pre-flatten values
+        {
+            use mlx_rs::ops::indexing::IndexOp;
+            let frame0 = x.index((0, 0, .., ..)).flatten(None, None).ok();
+            if let Some(f0) = frame0 {
+                mlx_rs::transforms::eval([&f0]).ok();
+                let fv: Vec<f32> = f0.as_slice().to_vec();
+                tracing::info!("pre-flatten[0,0,:10] = [{:.4}, {:.4}, {:.4}, {:.4}, {:.4}, {:.4}, {:.4}, {:.4}, {:.4}, {:.4}]",
+                    fv[0], fv[1], fv[2], fv[3], fv[4], fv[5], fv[6], fv[7], fv[8], fv[9]);
+            }
+        }
+
         let x = x.reshape(&[batch, t_out, -1])?;
+
+        // Debug: check flattened values
+        {
+            use mlx_rs::ops::indexing::IndexOp;
+            let frame0 = x.index((0, 0, ..)).flatten(None, None).ok();
+            if let Some(f0) = frame0 {
+                mlx_rs::transforms::eval([&f0]).ok();
+                let fv: Vec<f32> = f0.as_slice().to_vec();
+                tracing::info!("flattened[0,0,:10] = [{:.4}, {:.4}, {:.4}, {:.4}, {:.4}, {:.4}, {:.4}, {:.4}, {:.4}, {:.4}]",
+                    fv[0], fv[1], fv[2], fv[3], fv[4], fv[5], fv[6], fv[7], fv[8], fv[9]);
+            }
+        }
 
         // Linear projection to d_model
         self.out.forward(&x)
@@ -575,6 +622,7 @@ impl Conformer {
             sv.iter().copied().fold(f32::MIN, f32::max));
 
         // Positional encoding
+        tracing::info!("pos_enc scale={}", self.pos_enc.scale);
         let (x, pos_emb) = self.pos_enc.forward(&x, 0)?;
         mlx_rs::transforms::eval([&x]).ok();
         let pv: Vec<f32> = x.as_slice().to_vec();
