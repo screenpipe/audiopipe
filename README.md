@@ -133,7 +133,7 @@ audiopipe = { git = "https://github.com/screenpipe/audiopipe.git", features = ["
 cargo run --release --example transcribe --features parakeet -- audio.wav
 
 # Transcribe with GGML Qwen3-ASR
-cargo run --release --example test_ggml --features qwen3-asr-ggml -- audio.wav
+cargo run --release --example transcribe --features qwen3-asr-ggml -- --model qwen3-asr-0.6b-ggml audio.wav
 
 # Benchmark antirez (pure C, fast CPU)
 cargo run --release --example bench_asr --features qwen3-asr-antirez -- audio.wav

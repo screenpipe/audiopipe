@@ -22,8 +22,8 @@ half = { version = "2", optional = true }
 mlx-rs = { version = "0.25", optional = true }
 safetensors = { version = "0.4", optional = true }
 whisper-rs = { version = "0.15", optional = true }
-qwen3-asr-sys = { path = "qwen3-asr-sys", optional = true }
-antirez-asr-sys = { path = "antirez-asr-sys", optional = true }
+qwen3-asr-sys = { path = "crates/qwen3-asr-sys", optional = true }
+antirez-asr-sys = { path = "crates/antirez-asr-sys", optional = true }
 
 [dev-dependencies]
 hound = "3"
@@ -41,10 +41,6 @@ path = "examples/benchmark.rs"
 [[example]]
 name = "bench_batch"
 path = "examples/bench_batch.rs"
-
-[[example]]
-name = "test_ggml"
-path = "examples/test_ggml.rs"
 
 [[example]]
 name = "bench_asr"

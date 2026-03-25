@@ -1,6 +1,6 @@
 [submodule "qwen3-asr-sys/qwen3-asr.cpp"]
-	path = qwen3-asr-sys/qwen3-asr.cpp
+	path = crates/qwen3-asr-sys/qwen3-asr.cpp
 	url = https://github.com/predict-woo/qwen3-asr.cpp
 [submodule "antirez-asr-sys/qwen-asr"]
-	path = antirez-asr-sys/qwen-asr
+	path = crates/antirez-asr-sys/qwen-asr
 	url = https://github.com/antirez/qwen-asr
