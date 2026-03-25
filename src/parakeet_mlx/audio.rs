@@ -60,16 +60,35 @@ impl Default for MelConfig {
 // Mel filterbank (HTK formula, Slaney normalization)
 // ---------------------------------------------------------------------------
 
-/// Convert frequency in Hz to mel scale (HTK formula).
+/// Convert frequency in Hz to mel scale (Slaney formula, matching librosa default).
+/// Linear below 1000 Hz, logarithmic above.
 #[inline]
 fn hz_to_mel(hz: f64) -> f64 {
-    2595.0 * (1.0 + hz / 700.0).log10()
+    const F_SP: f64 = 200.0 / 3.0; // 66.667 Hz per mel below 1000 Hz
+    const MIN_LOG_HZ: f64 = 1000.0;
+    const MIN_LOG_MEL: f64 = 1000.0 / (200.0 / 3.0); // = 15.0
+    const LOG_STEP: f64 = 0.06875177742094912; // ln(6.4) / 27.0
+
+    if hz >= MIN_LOG_HZ {
+        MIN_LOG_MEL + (hz / MIN_LOG_HZ).ln() / LOG_STEP
+    } else {
+        hz / F_SP
+    }
 }
 
-/// Convert mel value back to Hz (HTK formula).
+/// Convert mel value back to Hz (Slaney formula).
 #[inline]
 fn mel_to_hz(mel: f64) -> f64 {
-    700.0 * (10.0_f64.powf(mel / 2595.0) - 1.0)
+    const F_SP: f64 = 200.0 / 3.0;
+    const MIN_LOG_HZ: f64 = 1000.0;
+    const MIN_LOG_MEL: f64 = 15.0;
+    const LOG_STEP: f64 = 0.06875177742094912;
+
+    if mel >= MIN_LOG_MEL {
+        MIN_LOG_HZ * (LOG_STEP * (mel - MIN_LOG_MEL)).exp()
+    } else {
+        F_SP * mel
+    }
 }
 
 /// Compute a mel filterbank matrix of shape `[n_mels, n_fft/2 + 1]`.
@@ -243,22 +262,50 @@ pub fn get_logmel(audio: &Array, config: &MelConfig) -> Result<Array> {
     //    abs gives element-wise absolute value
     //    sum even indices (|re|) + odd indices (|im|) → L1 magnitude per bin
     let viewed = stft_out.view_dtype(Dtype::Float32)?;
+    mlx_rs::transforms::eval([&viewed]).ok();
+    let vv: Vec<f32> = viewed.as_slice().to_vec();
+    tracing::info!("viewed: shape={:?}, [0,:6]=[{:.4}, {:.4}, {:.4}, {:.4}, {:.4}, {:.4}]",
+        viewed.shape(), vv[0], vv[1], vv[2], vv[3], vv[4], vv[5]);
     let viewed_abs = abs(&viewed)?;
 
-    let freq_dim = viewed.shape()[1] as usize;
-    let even_indices: Vec<i32> = (0..freq_dim as i32).step_by(2).collect();
-    let odd_indices: Vec<i32> = (1..freq_dim as i32).step_by(2).collect();
-    let even_idx = Array::from_slice(&even_indices, &[even_indices.len() as i32]);
-    let odd_idx = Array::from_slice(&odd_indices, &[odd_indices.len() as i32]);
-    let abs_even = viewed_abs.take_axis(&even_idx, 1)?;
-    let abs_odd = viewed_abs.take_axis(&odd_idx, 1)?;
-    let mut mag = &abs_even + &abs_odd;
+    // Reshape from [T, 2*F] to [T, F, 2] to separate real/imaginary,
+    // then sum abs along last dim → L1 magnitude
+    let n_frames = viewed_abs.shape()[0];
+    let n_freq = viewed_abs.shape()[1] / 2;
+    let reshaped = viewed_abs.reshape(&[n_frames, n_freq, 2])?;
+    let mut mag = reshaped.sum_axis(2, false)?;
+
+    // Debug: check L1 magnitude before power
+    mlx_rs::transforms::eval([&mag]).ok();
+    let mag_pre: Vec<f32> = mag.as_slice().to_vec();
+    tracing::info!("mag (pre-power): shape={:?}, [0,:3]=[{:.6}, {:.6}, {:.6}]",
+        mag.shape(), mag_pre[0], mag_pre[1], mag_pre[2]);
 
     // 4. Power spectrum
     if (config.mag_power - 1.0).abs() > f32::EPSILON {
         let power = Array::from_slice(&[config.mag_power], &[1]);
         mag = mag.power(&power)?;
     }
+
+    // Debug: check filterbank
+    let fb_check = compute_mel_filterbank(config.n_mels, config.n_fft, config.sample_rate);
+    mlx_rs::transforms::eval([&fb_check]).ok();
+    let fbv: Vec<f32> = fb_check.as_slice().to_vec();
+    tracing::info!("filterbank: shape={:?}, [0,:5]=[{:.6}, {:.6}, {:.6}, {:.6}, {:.6}], range=[{:.6}, {:.6}]",
+        fb_check.shape(), fbv[0], fbv[1], fbv[2], fbv[3], fbv[4],
+        fbv.iter().copied().fold(f32::MAX, f32::min),
+        fbv.iter().copied().fold(f32::MIN, f32::max));
+
+    // Debug: check mag shape and values
+    mlx_rs::transforms::eval([&mag]).ok();
+    let mag_v: Vec<f32> = mag.as_slice().to_vec();
+    tracing::info!("mag: shape={:?}, range=[{:.4}, {:.4}], first_frame=[{:.4}, {:.4}, {:.4}]",
+        mag.shape(),
+        mag_v.iter().copied().fold(f32::MAX, f32::min),
+        mag_v.iter().copied().fold(f32::MIN, f32::max),
+        mag_v.get(0).unwrap_or(&0.0),
+        mag_v.get(1).unwrap_or(&0.0),
+        mag_v.get(2).unwrap_or(&0.0));
 
     // 5. Mel filterbank: [n_mels, freq_bins] @ [freq_bins, T] → [n_mels, T]
     let filterbanks = compute_mel_filterbank(config.n_mels, config.n_fft, config.sample_rate);
@@ -268,6 +315,18 @@ pub fn get_logmel(audio: &Array, config: &MelConfig) -> Result<Array> {
     // 6. Log
     let eps = Array::from_slice(&[1e-5f32], &[1]);
     let log_mel = (&mel + &eps).log()?;
+
+    // Debug: check log_mel before normalize
+    mlx_rs::transforms::eval([&log_mel]).ok();
+    let lm: Vec<f32> = log_mel.as_slice().to_vec();
+    // log_mel shape is [n_mels, T], so [0,:5] = first mel bin across first 5 frames
+    tracing::info!("log_mel: shape={:?}, [0,:5]=[{:.4}, {:.4}, {:.4}, {:.4}, {:.4}]",
+        log_mel.shape(), lm[0], lm[1], lm[2], lm[3], lm[4]);
+    // First frame across mels: log_mel[:5, 0]
+    let stride = log_mel.shape()[1] as usize;
+    tracing::info!("log_mel[:5,0]=[{:.4}, {:.4}, {:.4}, {:.4}, {:.4}]",
+        lm[0], lm.get(stride).unwrap_or(&0.0), lm.get(2*stride).unwrap_or(&0.0),
+        lm.get(3*stride).unwrap_or(&0.0), lm.get(4*stride).unwrap_or(&0.0));
 
     // 7. Normalize
     let normalized = match config.normalize {
@@ -284,6 +343,15 @@ pub fn get_logmel(audio: &Array, config: &MelConfig) -> Result<Array> {
         }
         Normalize::None => log_mel,
     };
+
+    // Debug: check normalized
+    mlx_rs::transforms::eval([&normalized]).ok();
+    let nv: Vec<f32> = normalized.as_slice().to_vec();
+    let nstride = normalized.shape()[1] as usize;
+    tracing::info!("normalized: shape={:?}, [:5,0]=[{:.4}, {:.4}, {:.4}, {:.4}, {:.4}]",
+        normalized.shape(), nv[0], nv.get(nstride).unwrap_or(&0.0),
+        nv.get(2*nstride).unwrap_or(&0.0), nv.get(3*nstride).unwrap_or(&0.0),
+        nv.get(4*nstride).unwrap_or(&0.0));
 
     // 8. Transpose [n_mels, T] → [T, n_mels], add batch dim → [1, T, n_mels]
     let transposed = normalized.t();

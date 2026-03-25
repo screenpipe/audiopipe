@@ -554,21 +554,43 @@ impl Conformer {
             }
         };
 
+        // Check mel input — need to flatten properly since transpose creates a strided view
+        {
+            use mlx_rs::ops::indexing::IndexOp;
+            let frame0 = x.index((0, 0, ..));
+            let frame0_contig = frame0.flatten(None, None)?;
+            mlx_rs::transforms::eval([&frame0_contig]).ok();
+            let mv: Vec<f32> = frame0_contig.as_slice().to_vec();
+            tracing::info!("mel input[0,0,:5] = {:?}", &mv[..5.min(mv.len())]);
+        }
+
         // Subsampling: (B, T, 128) -> (B, T', 1024)
         let x = self.pre_encode.forward(x)?;
         let out_lengths = self.pre_encode.compute_lengths(&lengths)?;
-        tracing::debug!("pre_encode out: shape={:?}", x.shape());
+        mlx_rs::transforms::eval([&x]).ok();
+        let sv: Vec<f32> = x.as_slice().to_vec();
+        tracing::info!("pre_encode[0,0,:10] = {:?}", &sv[..10.min(sv.len())]);
+        tracing::info!("pre_encode range: [{:.4}, {:.4}]",
+            sv.iter().copied().fold(f32::MAX, f32::min),
+            sv.iter().copied().fold(f32::MIN, f32::max));
 
         // Positional encoding
         let (x, pos_emb) = self.pos_enc.forward(&x, 0)?;
-        tracing::debug!("after pos_enc: x={:?}, pos_emb={:?}", x.shape(), pos_emb.shape());
+        mlx_rs::transforms::eval([&x]).ok();
+        let pv: Vec<f32> = x.as_slice().to_vec();
+        tracing::info!("after pos_enc[0,0,:5] = {:?}", &pv[..5.min(pv.len())]);
 
         // Run through all conformer blocks
         let mut x = x;
         for (i, layer) in self.layers.iter_mut().enumerate() {
             x = layer.forward(&x, Some(&pos_emb))?;
-            if i == 0 || i == 23 {
-                tracing::debug!("after layer {}: shape={:?}", i, x.shape());
+            if i == 0 {
+                mlx_rs::transforms::eval([&x]).ok();
+                let lv: Vec<f32> = x.as_slice().to_vec();
+                tracing::info!("after layer0[0,0,:10] = {:?}", &lv[..10.min(lv.len())]);
+                tracing::info!("after layer0 range: [{:.4}, {:.4}]",
+                    lv.iter().copied().fold(f32::MAX, f32::min),
+                    lv.iter().copied().fold(f32::MIN, f32::max));
             }
         }
 
