@@ -91,23 +91,32 @@ impl ParakeetEngine {
 fn build_session_with_ep(onnx_path: &std::path::Path) -> Result<Session> {
     let file_name = onnx_path.file_name().unwrap_or_default().to_string_lossy().to_string();
 
-    // Check if model has external data (e.g. encoder-model.onnx.data).
-    // Models with external data must be loaded from memory for CoreML because
-    // ort's CoreML EP creates a temp directory at the model file path, which
-    // shadows the .onnx file and breaks external data resolution.
-    let has_external_data = onnx_path.with_extension("onnx.data").exists();
-
     // --- CoreML (macOS / iOS) ---
+    //
+    // Models with external data (.onnx.data) can't use MLProgram format due to
+    // ort creating a temp directory that shadows the model file path. For these,
+    // we use NeuralNetwork format only, loaded from file (not memory, since
+    // memory loading loses the path context needed for external data).
+    //
+    // Models without external data get the full treatment: MLProgram first
+    // (better ANE coverage), NeuralNetwork fallback, with caching.
     #[cfg(feature = "coreml")]
     {
-        // Derive a stable cache directory next to the model file
+        let has_external_data = onnx_path.with_extension("onnx.data").exists();
         let cache_dir = onnx_path.parent().map(|p| p.join("coreml_cache"));
 
-        // Try MLProgram first (more ops on ANE), fall back to NeuralNetwork
-        for format in &[
-            ort::ep::coreml::ModelFormat::MLProgram,
-            ort::ep::coreml::ModelFormat::NeuralNetwork,
-        ] {
+        let formats: &[ort::ep::coreml::ModelFormat] = if has_external_data {
+            // External data: only NeuralNetwork works via commit_from_file
+            &[ort::ep::coreml::ModelFormat::NeuralNetwork]
+        } else {
+            // No external data: try MLProgram first (more ANE ops), then NeuralNetwork
+            &[
+                ort::ep::coreml::ModelFormat::MLProgram,
+                ort::ep::coreml::ModelFormat::NeuralNetwork,
+            ]
+        };
+
+        for format in formats {
             let format_name = match format {
                 ort::ep::coreml::ModelFormat::MLProgram => "MLProgram",
                 ort::ep::coreml::ModelFormat::NeuralNetwork => "NeuralNetwork",
@@ -126,23 +135,14 @@ fn build_session_with_ep(onnx_path: &std::path::Path) -> Result<Session> {
             }
 
             tracing::info!(
-                "parakeet: trying CoreML EP ({}, All compute units{}) for {}",
-                format_name,
-                if has_external_data { ", from memory" } else { "" },
-                file_name
+                "parakeet: trying CoreML EP ({}, All compute units) for {}",
+                format_name, file_name
             );
 
             let result = (|| -> std::result::Result<Session, ort::Error> {
                 let mut builder = Session::builder()?;
                 builder = builder.with_execution_providers([ep.build()])?;
-                if has_external_data {
-                    // Load into memory to avoid path conflicts with external data
-                    let model_bytes = std::fs::read(onnx_path)
-                        .map_err(|e| ort::Error::new(format!("read model: {e}")))?;
-                    builder.commit_from_memory(&model_bytes)
-                } else {
-                    builder.commit_from_file(onnx_path)
-                }
+                builder.commit_from_file(onnx_path)
             })();
 
             match result {
