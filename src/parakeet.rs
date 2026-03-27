@@ -99,15 +99,31 @@ impl ParakeetEngine {
 fn build_session_with_ep(onnx_path: &std::path::Path) -> Result<Session> {
     let file_name = onnx_path.file_name().unwrap_or_default().to_string_lossy().to_string();
 
-    // CPU execution with thread limiting — used on all platforms.
-    // DirectML/CoreML were tested but CPU int8 is faster and uses less memory:
-    // - DirectML: loads full model into GPU memory (1.3GB → 18GB on Windows)
-    // - CoreML: only 44% of ops supported, CPU↔ANE transfer overhead
-    // - CPU int8: 0.66s/30s audio, 1.6GB memory, system stays responsive
-    // Use ~half of available cores (min 2, max 4) so the system stays responsive.
-    let num_cores = std::thread::available_parallelism()
-        .map(|n| n.get())
-        .unwrap_or(4);
+    // DirectML GPU acceleration — opt-in via SCREENPIPE_DIRECTML=1 env var.
+    // Screenpipe's GPU detection sets this when a discrete GPU (NVIDIA/AMD/Intel Arc)
+    // with ≥1GB VRAM is found. Falls back to CPU on failure.
+    #[cfg(feature = "directml")]
+    {
+        let use_directml = std::env::var("SCREENPIPE_DIRECTML")
+            .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
+            .unwrap_or(false);
+        if use_directml {
+            match Session::builder()
+                .and_then(|b| b.with_execution_providers([ort::ep::DirectML::default().build()]))
+                .and_then(|b| b.commit_from_file(onnx_path))
+            {
+                Ok(session) => {
+                    tracing::info!("parakeet: DirectML session created for {}", file_name);
+                    return Ok(session);
+                }
+                Err(e) => {
+                    tracing::warn!("parakeet: DirectML failed for {}, falling back to CPU: {}", file_name, e);
+                }
+            }
+        }
+    }
+
+    // CPU execution with thread limiting — default path.
     let intra_threads = 1;
     tracing::info!("parakeet: loading {} on CPU ({} threads)", file_name, intra_threads);
     Ok(Session::builder()?
