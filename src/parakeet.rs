@@ -4,6 +4,7 @@
 
 use crate::audio::{self, MelConfig};
 use crate::error::{Error, Result};
+use crate::hf_cache;
 use crate::model::{Engine, Segment, TranscribeOptions, TranscribeResult};
 use ndarray::{Array1, Array2, Array3};
 use ort::Session;
@@ -50,6 +51,40 @@ impl ParakeetEngine {
             .map_err(|e| Error::Download(format!("vocab.txt: {e}")))?;
         // Try external weights (needed for fp32 encoder, doesn't exist for int8)
         let _ = model.get("encoder-model.onnx.data");
+
+        Self::from_dir(&model_dir).map(|mut e| {
+            e.name = name.to_string();
+            e
+        })
+    }
+
+    /// Load from HuggingFace cache only — never downloads. Fails with [`Error::ModelNotCached`]
+    /// if any required file is missing locally.
+    pub fn from_pretrained_cache_only(name: &str) -> Result<Self> {
+        let repo = match name {
+            "parakeet-tdt-0.6b-v2" => "istupakov/parakeet-tdt-0.6b-v2-onnx",
+            "parakeet-tdt-0.6b-v3" => "istupakov/parakeet-tdt-0.6b-v3-onnx",
+            other => return Err(Error::ModelNotFound(other.to_string())),
+        };
+
+        let encoder_file = hf_cache::cache_get(repo, "encoder-model.int8.onnx")
+            .or_else(|| hf_cache::cache_get(repo, "encoder-model.onnx"))
+            .ok_or_else(|| Error::ModelNotCached(name.to_string()))?;
+        let model_dir = encoder_file
+            .parent()
+            .unwrap_or(std::path::Path::new("."))
+            .to_path_buf();
+
+        for (int8, fp32) in &[("decoder_joint-model.int8.onnx", "decoder_joint-model.onnx")] {
+            let ok = hf_cache::cache_get(repo, int8).is_some() || hf_cache::cache_get(repo, fp32).is_some();
+            if !ok {
+                return Err(Error::ModelNotCached(name.to_string()));
+            }
+        }
+        if hf_cache::cache_get(repo, "vocab.txt").is_none() {
+            return Err(Error::ModelNotCached(name.to_string()));
+        }
+        let _ = hf_cache::cache_get(repo, "encoder-model.onnx.data");
 
         Self::from_dir(&model_dir).map(|mut e| {
             e.name = name.to_string();

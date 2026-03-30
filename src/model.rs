@@ -98,6 +98,66 @@ impl Model {
         }
     }
 
+    /// Load only if every weight file is already in the Hugging Face hub cache (no network I/O).
+    /// Returns [`Error::ModelNotCached`] if a download is still needed — use [`Self::spawn_pretrained_download`]
+    /// then retry later with this method or [`Self::from_pretrained`].
+    pub fn from_pretrained_cache_only(name: &str) -> Result<Self> {
+        match name {
+            #[cfg(feature = "parakeet-mlx")]
+            n if n.contains("mlx") && n.starts_with("parakeet") => {
+                let base_name = n.replace("-mlx", "");
+                let engine =
+                    crate::parakeet_mlx::ParakeetMlxEngine::from_pretrained_cache_only(&base_name)?;
+                Ok(Self { inner: Box::new(engine) })
+            }
+            #[cfg(feature = "parakeet")]
+            n if n.starts_with("parakeet") => {
+                let engine = crate::parakeet::ParakeetEngine::from_pretrained_cache_only(n)?;
+                Ok(Self { inner: Box::new(engine) })
+            }
+            #[cfg(feature = "whisper")]
+            n if n.starts_with("whisper") => {
+                let engine = crate::whisper::WhisperEngine::from_pretrained_cache_only(n)?;
+                Ok(Self { inner: Box::new(engine) })
+            }
+            #[cfg(feature = "qwen3-asr-antirez")]
+            n if n.starts_with("qwen3-asr") && n.contains("antirez") => {
+                let engine = crate::qwen3_asr_antirez::AntirezAsrEngine::from_pretrained_cache_only(n)?;
+                Ok(Self { inner: Box::new(engine) })
+            }
+            #[cfg(feature = "qwen3-asr-ggml")]
+            n if n.starts_with("qwen3-asr") && n.contains("ggml") => {
+                let engine = crate::qwen3_asr_ggml::Qwen3AsrGgmlEngine::from_pretrained_cache_only(n)?;
+                Ok(Self { inner: Box::new(engine) })
+            }
+            #[cfg(feature = "qwen3-asr")]
+            n if n.starts_with("qwen3-asr") => {
+                let engine = crate::qwen3_asr::Qwen3AsrEngine::from_pretrained_cache_only(n)?;
+                Ok(Self { inner: Box::new(engine) })
+            }
+            _ => Err(Error::ModelNotFound(format!(
+                "unknown model '{}'. available: parakeet-tdt-0.6b-v2, parakeet-tdt-0.6b-v3, qwen3-asr-0.6b, whisper-*",
+                name
+            ))),
+        }
+    }
+
+    /// Start a background thread that runs [`Self::from_pretrained`] (blocking download + load).
+    /// Safe to call multiple times; HF hub serializes overlapping downloads.
+    pub fn spawn_pretrained_download(name: impl Into<String>) {
+        let name = name.into();
+        let log_name = name.clone();
+        let res = std::thread::Builder::new()
+            .name("audiopipe-hf-download".to_string())
+            .spawn(move || match Self::from_pretrained(&name) {
+                Ok(_) => tracing::info!("audiopipe: pretrained model ready: {}", name),
+                Err(e) => tracing::warn!("audiopipe: pretrained download/load failed for {}: {}", name, e),
+            });
+        if res.is_err() {
+            tracing::warn!("audiopipe: failed to spawn hf download thread for {}", log_name);
+        }
+    }
+
     /// Load a model from a local directory containing ONNX files.
     pub fn from_dir(path: &std::path::Path, engine_type: &str) -> Result<Self> {
         match engine_type {

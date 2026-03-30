@@ -17,6 +17,7 @@
 
 mod audio;
 mod error;
+mod hf_cache;
 mod model;
 
 #[cfg(feature = "parakeet")]

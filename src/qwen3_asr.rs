@@ -13,6 +13,7 @@
 
 use crate::audio::{mel_filterbank, stft};
 use crate::error::{Error, Result};
+use crate::hf_cache;
 use crate::model::{Engine, TranscribeOptions, TranscribeResult};
 
 use half::f16;
@@ -435,6 +436,41 @@ impl Qwen3AsrEngine {
 
         let config_path = repo.get("config.json")
             .map_err(|e| Error::Download(e.to_string()))?;
+        Self::from_dir(config_path.parent().unwrap())
+    }
+
+    /// Local HF cache only — never downloads.
+    pub fn from_pretrained_cache_only(name: &str) -> Result<Self> {
+        let repo_name = match name {
+            "qwen3-asr-0.6b" => "louis030195/qwen3-asr-0.6b-onnx",
+            _ => return Err(Error::ModelNotFound(format!("unknown Qwen3-ASR model: {}", name))),
+        };
+
+        for f in &[
+            "conv_stem.onnx",
+            "encoder.onnx",
+            "decoder.onnx",
+            "positional_embedding.npy",
+            "embed_tokens.npy",
+            "config.json",
+            "vocab.json",
+        ] {
+            if hf_cache::cache_get(repo_name, f).is_none() {
+                return Err(Error::ModelNotCached(name.to_string()));
+            }
+        }
+        for f in &[
+            "conv_stem.onnx.data",
+            "encoder.onnx.data",
+            "decoder.onnx.data",
+            "decoder_kv.onnx",
+            "decoder_kv.onnx.data",
+        ] {
+            let _ = hf_cache::cache_get(repo_name, f);
+        }
+
+        let config_path = hf_cache::cache_get(repo_name, "config.json")
+            .ok_or_else(|| Error::ModelNotCached(name.to_string()))?;
         Self::from_dir(config_path.parent().unwrap())
     }
 

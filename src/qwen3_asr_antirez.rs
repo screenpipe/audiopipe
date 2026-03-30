@@ -9,6 +9,7 @@
 //! Model format: safetensors from `Qwen/Qwen3-ASR-0.6B`.
 
 use crate::error::{Error, Result};
+use crate::hf_cache;
 use crate::model::{Engine, Segment, TranscribeOptions, TranscribeResult};
 use std::ffi::{CStr, CString};
 use std::path::Path;
@@ -58,6 +59,43 @@ impl AntirezAsrEngine {
         let config_path = repo
             .get("config.json")
             .map_err(|e| Error::Download(e.to_string()))?;
+        let model_dir = config_path
+            .parent()
+            .ok_or_else(|| Error::Other("config.json has no parent dir".into()))?;
+
+        Self::load_from_dir(model_dir, model_name.to_string())
+    }
+
+    /// Local HF cache only — never downloads.
+    pub fn from_pretrained_cache_only(name: &str) -> Result<Self> {
+        let (repo_name, model_name) = match name {
+            "qwen3-asr-0.6b-antirez" | "qwen3-asr-antirez" => {
+                ("Qwen/Qwen3-ASR-0.6B", "qwen3-asr-0.6b-antirez")
+            }
+            _ => {
+                return Err(Error::ModelNotFound(format!(
+                    "unknown antirez qwen-asr model: {}",
+                    name
+                )))
+            }
+        };
+
+        let required_files = &[
+            "config.json",
+            "model.safetensors",
+            "vocab.json",
+            "merges.txt",
+        ];
+
+        for f in required_files {
+            if hf_cache::cache_get(repo_name, f).is_none() {
+                return Err(Error::ModelNotCached(name.to_string()));
+            }
+        }
+        let _ = hf_cache::cache_get(repo_name, "generation_config.json");
+
+        let config_path = hf_cache::cache_get(repo_name, "config.json")
+            .ok_or_else(|| Error::ModelNotCached(name.to_string()))?;
         let model_dir = config_path
             .parent()
             .ok_or_else(|| Error::Other("config.json has no parent dir".into()))?;

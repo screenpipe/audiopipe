@@ -8,6 +8,7 @@
 //! quantization support, wrapping the C++ implementation via FFI.
 
 use crate::error::{Error, Result};
+use crate::hf_cache;
 use crate::model::{Engine, Segment, TranscribeOptions, TranscribeResult};
 use std::ffi::{CStr, CString};
 use std::path::{Path, PathBuf};
@@ -49,6 +50,29 @@ impl Qwen3AsrGgmlEngine {
         let model_path = repo
             .get(filename)
             .map_err(|e| Error::Download(format!("{}: {}", filename, e)))?;
+
+        Self::load_from_path(&model_path, name.to_string())
+    }
+
+    /// Local HF cache only — never downloads.
+    pub fn from_pretrained_cache_only(name: &str) -> Result<Self> {
+        let (repo_name, filename) = match name {
+            "qwen3-asr-0.6b-ggml" | "qwen3-asr-0.6b-ggml-f16" => {
+                ("screenpipe/qwen3-asr-0.6b-gguf", "qwen3-asr-0.6b-f16.gguf")
+            }
+            "qwen3-asr-0.6b-ggml-q8" => {
+                ("screenpipe/qwen3-asr-0.6b-gguf", "qwen3-asr-0.6b-q8_0.gguf")
+            }
+            _ => {
+                return Err(Error::ModelNotFound(format!(
+                    "unknown qwen3-asr-ggml model: {}",
+                    name
+                )))
+            }
+        };
+
+        let model_path = hf_cache::cache_get(repo_name, filename)
+            .ok_or_else(|| Error::ModelNotCached(name.to_string()))?;
 
         Self::load_from_path(&model_path, name.to_string())
     }

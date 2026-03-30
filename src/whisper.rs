@@ -5,6 +5,7 @@
 //! Whisper engine — wraps whisper.cpp via whisper-rs.
 
 use crate::error::{Error, Result};
+use crate::hf_cache;
 use crate::model::{Engine, Segment, TranscribeOptions, TranscribeResult};
 use std::path::{Path, PathBuf};
 
@@ -35,6 +36,26 @@ impl WhisperEngine {
         tracing::info!("downloading {}", filename);
         let model_path = repo.get(filename)
             .map_err(|e| Error::Download(format!("{}: {}", filename, e)))?;
+
+        Self::load_from_path(&model_path, name.to_string())
+    }
+
+    /// Local HF cache only — never downloads.
+    pub fn from_pretrained_cache_only(name: &str) -> Result<Self> {
+        let (repo_name, filename) = match name {
+            "whisper-large-v3-turbo" => ("ggerganov/whisper.cpp", "ggml-large-v3-turbo.bin"),
+            "whisper-large-v3-turbo-q5" => ("ggerganov/whisper.cpp", "ggml-large-v3-turbo-q5_0.bin"),
+            "whisper-large-v3" => ("ggerganov/whisper.cpp", "ggml-large-v3.bin"),
+            "whisper-large-v3-q5" => ("ggerganov/whisper.cpp", "ggml-large-v3-q5_0.bin"),
+            "whisper-medium" => ("ggerganov/whisper.cpp", "ggml-medium.bin"),
+            "whisper-small" => ("ggerganov/whisper.cpp", "ggml-small.bin"),
+            "whisper-base" => ("ggerganov/whisper.cpp", "ggml-base.bin"),
+            "whisper-tiny" => ("ggerganov/whisper.cpp", "ggml-tiny.bin"),
+            _ => return Err(Error::ModelNotFound(format!("unknown whisper model: {}", name))),
+        };
+
+        let model_path = hf_cache::cache_get(repo_name, filename)
+            .ok_or_else(|| Error::ModelNotCached(name.to_string()))?;
 
         Self::load_from_path(&model_path, name.to_string())
     }

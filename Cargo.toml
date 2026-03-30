@@ -21,7 +21,8 @@ serde_json = "1"
 half = { version = "2", optional = true }
 mlx-rs = { version = "0.25", optional = true }
 safetensors = { version = "0.4", optional = true }
-whisper-rs = { version = "0.15", optional = true }
+# Must match screenpipe-audio (single native `whisper` link in the app graph).
+whisper-rs = { git = "https://github.com/screenpipe/whisper-rs.git", rev = "97e4070", optional = true, features = ["tracing_backend"] }
 qwen3-asr-sys = { path = "crates/qwen3-asr-sys", optional = true }
 antirez-asr-sys = { path = "crates/antirez-asr-sys", optional = true }
 

@@ -24,6 +24,7 @@ use self::audio::{get_logmel, MelConfig};
 use self::decode::greedy_tdt_decode;
 use self::rnnt::{JointNetwork, PredictNetwork};
 use crate::error::{Error, Result};
+use crate::hf_cache;
 use crate::model::{Engine, Segment, TranscribeOptions, TranscribeResult};
 
 // ---------------------------------------------------------------------------
@@ -118,6 +119,37 @@ impl ParakeetMlxEngine {
             .to_path_buf();
 
         tracing::info!("loading model from {:?}", model_dir);
+        Self::from_dir(&model_dir, name)
+    }
+
+    /// Same as [`Self::from_pretrained`] but only uses the local HF cache (no download).
+    pub fn from_pretrained_cache_only(name: &str) -> Result<Self> {
+        let repo = match name {
+            "parakeet-tdt-0.6b-v3" => HF_REPO,
+            other => {
+                return Err(Error::ModelNotFound(format!(
+                    "unsupported parakeet-mlx model '{}', available: parakeet-tdt-0.6b-v3",
+                    other
+                )));
+            }
+        };
+
+        let safetensors_path = hf_cache::cache_get(repo, "model.safetensors")
+            .ok_or_else(|| Error::ModelNotCached(name.to_string()))?;
+        if hf_cache::cache_get(repo, "config.json").is_none() {
+            return Err(Error::ModelNotCached(name.to_string()));
+        }
+        let vocab_ok = hf_cache::cache_get(repo, "vocab.txt").is_some()
+            || hf_cache::cache_get(repo, "tokenizer.model").is_some();
+        if !vocab_ok {
+            return Err(Error::ModelNotCached(name.to_string()));
+        }
+
+        let model_dir = safetensors_path
+            .parent()
+            .unwrap_or(Path::new("."))
+            .to_path_buf();
+
         Self::from_dir(&model_dir, name)
     }
 
