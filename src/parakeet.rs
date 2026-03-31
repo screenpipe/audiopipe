@@ -144,7 +144,7 @@ fn build_session_with_ep(onnx_path: &std::path::Path) -> Result<Session> {
             .unwrap_or(false);
         if use_directml {
             match Session::builder()
-                .and_then(|b| b.with_execution_providers([ort::ep::DirectML::default().build()]))
+                .and_then(|b| b.with_execution_providers([ort::DirectMLExecutionProvider::default().build()]))
                 .and_then(|b| b.commit_from_file(onnx_path))
             {
                 Ok(session) => {

@@ -46,7 +46,7 @@ fn build_session(onnx_path: &Path, cache_dir: Option<&Path>) -> Result<Session> 
                 ort::ep::coreml::ModelFormat::NeuralNetwork => "NeuralNetwork",
             };
 
-            let mut ep = ort::ep::CoreML::default()
+            let mut ep = ort::CoreMLExecutionProvider::default()
                 .with_model_format(*format)
                 .with_compute_units(ort::ep::coreml::ComputeUnits::All)
                 .with_specialization_strategy(ort::ep::coreml::SpecializationStrategy::FastPrediction)
@@ -88,7 +88,7 @@ fn build_session(onnx_path: &Path, cache_dir: Option<&Path>) -> Result<Session> 
     // --- DirectML (Windows) ---
     #[cfg(feature = "directml")]
     {
-        let ep = ort::ep::DirectML::default();
+        let ep = ort::DirectMLExecutionProvider::default();
         tracing::info!("qwen3-asr: configuring DirectML EP for {}", file_name);
 
         match Session::builder()
@@ -119,7 +119,7 @@ fn build_session_gpu(onnx_path: &Path) -> Result<Session> {
 
     #[cfg(feature = "directml")]
     {
-        let ep = ort::ep::DirectML::default();
+        let ep = ort::DirectMLExecutionProvider::default();
         tracing::info!("qwen3-asr: trying DirectML EP for {}", file_name);
         match Session::builder()
             .map_err(ort_err)
