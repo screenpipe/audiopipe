@@ -123,32 +123,32 @@ impl Model {
                 let base_name = n.replace("-mlx", "");
                 let engine =
                     crate::parakeet_mlx::ParakeetMlxEngine::from_pretrained_cache_only(&base_name)?;
-                Ok(Self { inner: Box::new(engine) })
+                Ok(Self { inner: Box::new(engine), uses_gpu: true })
             }
             #[cfg(feature = "parakeet")]
             n if n.starts_with("parakeet") => {
                 let engine = crate::parakeet::ParakeetEngine::from_pretrained_cache_only(n)?;
-                Ok(Self { inner: Box::new(engine) })
+                Ok(Self { inner: Box::new(engine), uses_gpu: false })
             }
             #[cfg(feature = "whisper")]
             n if n.starts_with("whisper") => {
                 let engine = crate::whisper::WhisperEngine::from_pretrained_cache_only(n)?;
-                Ok(Self { inner: Box::new(engine) })
+                Ok(Self { inner: Box::new(engine), uses_gpu: false })
             }
             #[cfg(feature = "qwen3-asr-antirez")]
             n if n.starts_with("qwen3-asr") && n.contains("antirez") => {
                 let engine = crate::qwen3_asr_antirez::AntirezAsrEngine::from_pretrained_cache_only(n)?;
-                Ok(Self { inner: Box::new(engine) })
+                Ok(Self { inner: Box::new(engine), uses_gpu: false })
             }
             #[cfg(feature = "qwen3-asr-ggml")]
             n if n.starts_with("qwen3-asr") && n.contains("ggml") => {
                 let engine = crate::qwen3_asr_ggml::Qwen3AsrGgmlEngine::from_pretrained_cache_only(n)?;
-                Ok(Self { inner: Box::new(engine) })
+                Ok(Self { inner: Box::new(engine), uses_gpu: false })
             }
             #[cfg(feature = "qwen3-asr")]
             n if n.starts_with("qwen3-asr") => {
                 let engine = crate::qwen3_asr::Qwen3AsrEngine::from_pretrained_cache_only(n)?;
-                Ok(Self { inner: Box::new(engine) })
+                Ok(Self { inner: Box::new(engine), uses_gpu: false })
             }
             _ => Err(Error::ModelNotFound(format!(
                 "unknown model '{}'. available: parakeet-tdt-0.6b-v2, parakeet-tdt-0.6b-v3, qwen3-asr-0.6b, whisper-*",
