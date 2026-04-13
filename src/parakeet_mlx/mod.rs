@@ -14,9 +14,14 @@ pub mod conformer;
 pub mod decode;
 pub mod rnnt;
 
-// MLX C API — synchronize waits for all GPU commands to complete.
+// MLX C API — synchronize waits for all GPU commands on a stream to complete.
+// mlx_stream is an opaque pointer type in the C API.
+type MlxStream = *mut std::ffi::c_void;
+
 extern "C" {
-    fn mlx_synchronize() -> std::ffi::c_int;
+    fn mlx_default_gpu_stream_new() -> MlxStream;
+    fn mlx_synchronize(stream: MlxStream) -> std::ffi::c_int;
+    fn mlx_stream_free(stream: MlxStream) -> std::ffi::c_int;
 }
 
 use std::collections::HashMap;
@@ -324,9 +329,13 @@ impl Engine for ParakeetMlxEngine {
         // transcription starts before they finish, overlapping Metal
         // submissions cause MLX to call abort().
         //
-        // mlx_synchronize() blocks until all enqueued operations on the
-        // default stream have completed, including their Metal callbacks.
-        unsafe { mlx_synchronize() };
+        // mlx_synchronize(stream) blocks until all enqueued operations on
+        // the stream have completed, including their Metal callbacks.
+        unsafe {
+            let stream = mlx_default_gpu_stream_new();
+            mlx_synchronize(stream);
+            mlx_stream_free(stream);
+        };
 
         Ok(TranscribeResult { text, segments })
     }
