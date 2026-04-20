@@ -4,7 +4,6 @@
 
 //! Test decoder_kv_v2 with MLProgram format.
 
-use ort::ep;
 use ort::session::Session;
 
 fn main() {
@@ -17,10 +16,10 @@ fn main() {
     println!("Loading {} with MLProgram...", path);
     match Session::builder()
         .and_then(|b| b.with_execution_providers([
-            ep::CoreML::default()
-                .with_model_format(ep::coreml::ModelFormat::MLProgram)
-                .with_compute_units(ep::coreml::ComputeUnits::All)
-                .with_specialization_strategy(ep::coreml::SpecializationStrategy::FastPrediction)
+            ort::execution_providers::CoreMLExecutionProvider::default()
+                .with_model_format(ort::execution_providers::coreml::CoreMLModelFormat::MLProgram)
+                .with_compute_units(ort::execution_providers::coreml::CoreMLComputeUnits::All)
+                .with_specialization_strategy(ort::execution_providers::coreml::CoreMLSpecializationStrategy::FastPrediction)
                 .with_low_precision_accumulation_on_gpu(true)
                 .build()
         ]))
@@ -37,9 +36,9 @@ fn main() {
     println!("\nLoading {} with MLProgram...", orig);
     match Session::builder()
         .and_then(|b| b.with_execution_providers([
-            ep::CoreML::default()
-                .with_model_format(ep::coreml::ModelFormat::MLProgram)
-                .with_compute_units(ep::coreml::ComputeUnits::All)
+            ort::execution_providers::CoreMLExecutionProvider::default()
+                .with_model_format(ort::execution_providers::coreml::CoreMLModelFormat::MLProgram)
+                .with_compute_units(ort::execution_providers::coreml::CoreMLComputeUnits::All)
                 .build()
         ]))
         .and_then(|b| b.commit_from_file(&orig))

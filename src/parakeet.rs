@@ -7,13 +7,12 @@ use crate::error::{Error, Result};
 use crate::hf_cache;
 use crate::model::{Engine, Segment, TranscribeOptions, TranscribeResult};
 use ndarray::{Array1, Array2, Array3};
-use ort::Session;
 use std::path::{Path, PathBuf};
 
 /// Parakeet TDT engine using ONNX Runtime.
 pub struct ParakeetEngine {
-    encoder: Session,
-    decoder: Session,
+    encoder: ort::session::Session,
+    decoder: ort::session::Session,
     vocab: Vec<String>,
     vocab_size: usize,
     name: String,
@@ -131,7 +130,7 @@ impl ParakeetEngine {
 ///
 /// On Windows with `directml` feature: tries DirectML for GPU acceleration.
 /// Falls back to CPU if no accelerator works.
-fn build_session_with_ep(onnx_path: &std::path::Path) -> Result<Session> {
+fn build_session_with_ep(onnx_path: &std::path::Path) -> Result<ort::session::Session> {
     let file_name = onnx_path.file_name().unwrap_or_default().to_string_lossy().to_string();
 
     // DirectML GPU acceleration — opt-in via SCREENPIPE_DIRECTML=1 env var.
@@ -143,8 +142,8 @@ fn build_session_with_ep(onnx_path: &std::path::Path) -> Result<Session> {
             .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
             .unwrap_or(false);
         if use_directml {
-            match Session::builder()
-                .and_then(|b| b.with_execution_providers([ort::DirectMLExecutionProvider::default().build()]))
+            match ort::session::Session::builder()
+                .and_then(|b| b.with_execution_providers([ort::execution_providers::DirectMLExecutionProvider::default().build()]))
                 .and_then(|b| b.commit_from_file(onnx_path))
             {
                 Ok(session) => {
@@ -161,16 +160,16 @@ fn build_session_with_ep(onnx_path: &std::path::Path) -> Result<Session> {
     // CPU execution with thread limiting — default path.
     let intra_threads = 1;
     tracing::info!("parakeet: loading {} on CPU ({} threads)", file_name, intra_threads);
-    Ok(Session::builder()?
+    Ok(ort::session::Session::builder()?
         .with_intra_threads(intra_threads)?
         .with_inter_threads(1)?
         .commit_from_file(onnx_path)?)
 }
 
 /// Helper to extract f32 tensor from ort output as a raw shape + data.
-fn extract_f32(val: &ort::DynValue) -> Result<(Vec<usize>, Vec<f32>)> {
+fn extract_f32(val: &ort::value::DynValue) -> Result<(Vec<usize>, Vec<f32>)> {
     let view = val
-        .try_extract_tensor::<f32>()
+        .try_extract_array::<f32>()
         .map_err(|e| Error::Other(format!("extract tensor: {e}")))?;
     let dims: Vec<usize> = view.shape().to_vec();
     Ok((dims, view.iter().copied().collect()))
@@ -196,10 +195,10 @@ impl Engine for ParakeetEngine {
             .to_owned();
         let input_len = Array1::from_vec(vec![n_frames as i64]);
 
-        let enc_inputs = ort::inputs!(
-            "audio_signal" => ort::Value::from_array(input)?,
-            "length" => ort::Value::from_array(input_len)?
-        )?;
+        let enc_inputs = ort::inputs![
+            "audio_signal" => ort::value::TensorRef::from_array_view(input.view())?,
+            "length" => ort::value::TensorRef::from_array_view(input_len.view())?
+        ];
         let enc_out = self.encoder.run(enc_inputs)?;
 
         let (enc_shape, enc_data) = extract_f32(&enc_out["outputs"])?;
@@ -246,7 +245,7 @@ impl Engine for ParakeetEngine {
 
 /// Frame-by-frame TDT greedy decode.
 fn greedy_tdt_decode(
-    decoder: &mut Session,
+    decoder: &mut ort::session::Session,
     encoder_out: &Array3<f32>,
     vocab_size: usize,
 ) -> Result<(Vec<usize>, Vec<usize>)> {
@@ -273,13 +272,14 @@ fn greedy_tdt_decode(
         let targets = Array2::from_shape_vec((1, 1), vec![last_token])
             .map_err(|e| Error::Other(format!("targets: {e}")))?;
 
-        let dec_inputs = ort::inputs!(
-            "encoder_outputs" => ort::Value::from_array(frame)?,
-            "targets" => ort::Value::from_array(targets)?,
-            "target_length" => ort::Value::from_array(Array1::from_vec(vec![1i32]))?,
-            "input_states_1" => ort::Value::from_array(state_h.clone())?,
-            "input_states_2" => ort::Value::from_array(state_c.clone())?
-        )?;
+        let target_length = Array1::from_vec(vec![1i32]);
+        let dec_inputs = ort::inputs![
+            "encoder_outputs" => ort::value::TensorRef::from_array_view(frame.view())?,
+            "targets" => ort::value::TensorRef::from_array_view(targets.view())?,
+            "target_length" => ort::value::TensorRef::from_array_view(target_length.view())?,
+            "input_states_1" => ort::value::TensorRef::from_array_view(state_h.view())?,
+            "input_states_2" => ort::value::TensorRef::from_array_view(state_c.view())?
+        ];
         let out = decoder.run(dec_inputs)?;
 
         let (_, logits) = extract_f32(&out["outputs"])?;

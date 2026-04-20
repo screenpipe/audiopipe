@@ -4,7 +4,6 @@
 
 //! Quick test to identify which ONNX model components work with CoreML MLProgram.
 
-use ort::ep;
 use ort::session::Session;
 
 fn try_load(name: &str, path: &str, format: &str) {
@@ -12,10 +11,10 @@ fn try_load(name: &str, path: &str, format: &str) {
     let result = if format == "MLProgram" {
         Session::builder()
             .and_then(|b| b.with_execution_providers([
-                ep::CoreML::default()
-                    .with_model_format(ep::coreml::ModelFormat::MLProgram)
-                    .with_compute_units(ep::coreml::ComputeUnits::All)
-                    .with_specialization_strategy(ep::coreml::SpecializationStrategy::FastPrediction)
+                ort::execution_providers::CoreMLExecutionProvider::default()
+                    .with_model_format(ort::execution_providers::coreml::CoreMLModelFormat::MLProgram)
+                    .with_compute_units(ort::execution_providers::coreml::CoreMLComputeUnits::All)
+                    .with_specialization_strategy(ort::execution_providers::coreml::CoreMLSpecializationStrategy::FastPrediction)
                     .with_low_precision_accumulation_on_gpu(true)
                     .with_profile_compute_plan(true)
                     .build()
@@ -24,9 +23,9 @@ fn try_load(name: &str, path: &str, format: &str) {
     } else {
         Session::builder()
             .and_then(|b| b.with_execution_providers([
-                ep::CoreML::default()
-                    .with_model_format(ep::coreml::ModelFormat::NeuralNetwork)
-                    .with_compute_units(ep::coreml::ComputeUnits::All)
+                ort::execution_providers::CoreMLExecutionProvider::default()
+                    .with_model_format(ort::execution_providers::coreml::CoreMLModelFormat::NeuralNetwork)
+                    .with_compute_units(ort::execution_providers::coreml::CoreMLComputeUnits::All)
                     .build()
             ]))
             .and_then(|b| b.commit_from_file(path))

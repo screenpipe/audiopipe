@@ -18,7 +18,6 @@ use crate::model::{Engine, TranscribeOptions, TranscribeResult};
 
 use half::f16;
 use ndarray::Array2;
-use ort::session::Session;
 use std::path::Path;
 
 /// Build an ONNX Runtime session with the best available execution provider.
@@ -30,7 +29,7 @@ use std::path::Path;
 /// - Model caching (avoid recompilation across runs)
 /// - fp16 accumulation on GPU
 #[allow(dead_code)]
-fn build_session(onnx_path: &Path, cache_dir: Option<&Path>) -> Result<Session> {
+fn build_session(onnx_path: &Path, cache_dir: Option<&Path>) -> Result<ort::session::Session> {
     let file_name = onnx_path.file_name().unwrap_or_default().to_string_lossy().to_string();
 
     // --- CoreML (macOS / iOS) ---
@@ -38,46 +37,46 @@ fn build_session(onnx_path: &Path, cache_dir: Option<&Path>) -> Result<Session> 
     {
         // Try MLProgram first (more ops on ANE), fall back to NeuralNetwork
         for format in &[
-            ort::ep::coreml::ModelFormat::MLProgram,
-            ort::ep::coreml::ModelFormat::NeuralNetwork,
+            ort::execution_providers::coreml::CoreMLModelFormat::MLProgram,
+            ort::execution_providers::coreml::CoreMLModelFormat::NeuralNetwork,
         ] {
             let format_name = match format {
-                ort::ep::coreml::ModelFormat::MLProgram => "MLProgram",
-                ort::ep::coreml::ModelFormat::NeuralNetwork => "NeuralNetwork",
+                ort::execution_providers::coreml::CoreMLModelFormat::MLProgram => "MLProgram",
+                ort::execution_providers::coreml::CoreMLModelFormat::NeuralNetwork => "NeuralNetwork",
             };
 
-            let mut ep = ort::CoreMLExecutionProvider::default()
+            let mut ep = ort::execution_providers::CoreMLExecutionProvider::default()
                 .with_model_format(*format)
-                .with_compute_units(ort::ep::coreml::ComputeUnits::All)
-                .with_specialization_strategy(ort::ep::coreml::SpecializationStrategy::FastPrediction)
+                .with_compute_units(ort::execution_providers::coreml::CoreMLComputeUnits::All)
+                .with_specialization_strategy(ort::execution_providers::coreml::CoreMLSpecializationStrategy::FastPrediction)
                 .with_low_precision_accumulation_on_gpu(true);
 
-            if let Some(dir) = cache_dir {
+        if let Some(dir) = cache_dir {
                 // Use format-specific subdirectory for cache
                 let cache_sub = dir.join(format_name.to_lowercase());
-                let _ = std::fs::create_dir_all(&cache_sub);
-                ep = ep.with_model_cache_dir(cache_sub.to_string_lossy());
-            }
+            let _ = std::fs::create_dir_all(&cache_sub);
+            ep = ep.with_model_cache_dir(cache_sub.to_string_lossy());
+        }
 
             tracing::info!(
                 "qwen3-asr: trying CoreML EP ({}, All compute units) for {}",
                 format_name, file_name
             );
 
-            match Session::builder()
-                .map_err(ort_err)
-                .and_then(|b| b.with_execution_providers([ep.build()]).map_err(ort_err))
-                .and_then(|b| b.commit_from_file(onnx_path).map_err(ort_err))
-            {
-                Ok(session) => {
+        match ort::session::Session::builder()
+            .map_err(ort_err)
+            .and_then(|b| b.with_execution_providers([ep.build()]).map_err(ort_err))
+            .and_then(|b| b.commit_from_file(onnx_path).map_err(ort_err))
+        {
+            Ok(session) => {
                     tracing::info!("qwen3-asr: {} loaded with CoreML {} format", file_name, format_name);
-                    return Ok(session);
-                }
-                Err(e) => {
-                    tracing::warn!(
+                return Ok(session);
+            }
+            Err(e) => {
+                tracing::warn!(
                         "qwen3-asr: CoreML {} failed for {}: {}",
                         format_name, file_name, e
-                    );
+                );
                 }
             }
         }
@@ -88,10 +87,10 @@ fn build_session(onnx_path: &Path, cache_dir: Option<&Path>) -> Result<Session> 
     // --- DirectML (Windows) ---
     #[cfg(feature = "directml")]
     {
-        let ep = ort::DirectMLExecutionProvider::default();
+        let ep = ort::execution_providers::DirectMLExecutionProvider::default();
         tracing::info!("qwen3-asr: configuring DirectML EP for {}", file_name);
 
-        match Session::builder()
+        match ort::session::Session::builder()
             .map_err(ort_err)
             .and_then(|b| b.with_execution_providers([ep.build()]).map_err(ort_err))
             .and_then(|b| b.commit_from_file(onnx_path).map_err(ort_err))
@@ -104,7 +103,7 @@ fn build_session(onnx_path: &Path, cache_dir: Option<&Path>) -> Result<Session> 
     }
 
     // CPU fallback
-    Session::builder().map_err(ort_err)?
+    ort::session::Session::builder().map_err(ort_err)?
         .commit_from_file(onnx_path).map_err(ort_err)
 }
 
@@ -114,14 +113,14 @@ fn build_session(onnx_path: &Path, cache_dir: Option<&Path>) -> Result<Session> 
 /// falls back to CPU otherwise. CoreML is intentionally skipped: with only
 /// 0-36% node coverage, the data-transfer overhead across dozens of small
 /// partitions makes inference 3-4× slower than pure CPU on Apple Silicon.
-fn build_session_gpu(onnx_path: &Path) -> Result<Session> {
+fn build_session_gpu(onnx_path: &Path) -> Result<ort::session::Session> {
     let file_name = onnx_path.file_name().unwrap_or_default().to_string_lossy().to_string();
 
     #[cfg(feature = "directml")]
     {
-        let ep = ort::DirectMLExecutionProvider::default();
+        let ep = ort::execution_providers::DirectMLExecutionProvider::default();
         tracing::info!("qwen3-asr: trying DirectML EP for {}", file_name);
-        match Session::builder()
+        match ort::session::Session::builder()
             .map_err(ort_err)
             .and_then(|b| b.with_execution_providers([ep.build()]).map_err(ort_err))
             .and_then(|b| b.commit_from_file(onnx_path).map_err(ort_err))
@@ -138,7 +137,7 @@ fn build_session_gpu(onnx_path: &Path) -> Result<Session> {
 
     // CPU fallback (also the primary path on macOS where AMX accelerates via Accelerate.framework)
     tracing::info!("qwen3-asr: loading {} on CPU", file_name);
-    Session::builder().map_err(ort_err)?
+    ort::session::Session::builder().map_err(ort_err)?
         .commit_from_file(onnx_path).map_err(ort_err)
 }
 
@@ -195,13 +194,13 @@ fn ort_err(e: ort::Error) -> Error {
 }
 
 pub struct Qwen3AsrEngine {
-    conv_stem: Session,
-    encoder: Session,
+    conv_stem: ort::session::Session,
+    encoder: ort::session::Session,
     /// KV-cache decoder (preferred) or legacy no-cache decoder.
     /// Always runs on CPU: partial CoreML offload (~36% of nodes across 118
     /// partitions) is 3-4× slower than pure CPU due to data transfer overhead
     /// on every autoregressive decode step.
-    decoder: Session,
+    decoder: ort::session::Session,
     has_kv_cache: bool,
     /// Positional embeddings stored flat as f16 [max_positions × d_model].
     pos_emb: Vec<f16>,
