@@ -202,10 +202,9 @@ impl Engine for ParakeetEngine {
         // byte for byte.
         let timestamp_dim = enc_array.shape()[1];
 
-        let mut state = TdtDecodeState::new(self.vocab_size);
         let (tokens, frame_indices) = {
             let mut decoder = self.decoder.lock().expect("parakeet decoder mutex poisoned");
-            tdt_decode(&mut decoder, &enc_array, self.vocab_size, &mut state, 0)?
+            tdt_decode(&mut decoder, &enc_array, self.vocab_size)?
         };
 
         Ok(build_result(&self.vocab, &tokens, &frame_indices, audio.len(), timestamp_dim))
@@ -223,10 +222,8 @@ impl Engine for ParakeetEngine {
             vocab_size: self.vocab_size,
             sample_rate,
             audio_buffer: Vec::new(),
-            last_frame_index: 0,
-            state: TdtDecodeState::new(self.vocab_size),
-            tokens: Vec::new(),
-            frame_indices: Vec::new(),
+            last_text: String::new(),
+            last_segments: Vec::new(),
             finished: false,
         }))
     }
@@ -299,48 +296,27 @@ fn build_result(
     }
 }
 
-/// Carry-over state for the TDT greedy decoder. Lives across streaming
-/// `push` calls so chunked input produces the same tokens as a one-shot run.
-struct TdtDecodeState {
-    state_h: Array3<f32>,
-    state_c: Array3<f32>,
-    last_token: i32,
-    /// Tokens already emitted at the current `t`. Reset every time `t` advances.
-    emitted: usize,
-}
-
-impl TdtDecodeState {
-    fn new(vocab_size: usize) -> Self {
-        let blank_id = vocab_size - 1;
-        Self {
-            state_h: Array3::<f32>::zeros((2, 1, 640)),
-            state_c: Array3::<f32>::zeros((2, 1, 640)),
-            last_token: blank_id as i32,
-            emitted: 0,
-        }
-    }
-}
-
-/// Resumable greedy TDT decode. Runs from `start_t` to the end of `encoder_out`,
-/// mutating `state` and returning the (tokens, frame_indices) emitted in this
-/// span. The one-shot path passes a fresh `state` with `start_t = 0`; the
-/// streaming path reuses the previous `state` and starts at the previous
-/// `last_frame_index`.
+/// Greedy TDT decode over the full encoder output. The streaming path calls
+/// this on every push with the current full buffer, so there is no
+/// cross-call state to carry.
 fn tdt_decode(
     decoder: &mut ort::session::Session,
     encoder_out: &Array3<f32>,
     vocab_size: usize,
-    state: &mut TdtDecodeState,
-    start_t: usize,
 ) -> Result<(Vec<usize>, Vec<usize>)> {
     let enc_dim = encoder_out.shape()[1];
     let time_steps = encoder_out.shape()[2];
     let blank_id = vocab_size - 1;
     let max_tokens_per_step = 10;
 
+    let mut state_h = Array3::<f32>::zeros((2, 1, 640));
+    let mut state_c = Array3::<f32>::zeros((2, 1, 640));
+    let mut last_token: i32 = blank_id as i32;
+    let mut emitted_at_t: usize = 0;
+
     let mut tokens = Vec::new();
     let mut frame_indices = Vec::new();
-    let mut t = start_t;
+    let mut t = 0usize;
 
     while t < time_steps {
         let frame = encoder_out.slice(ndarray::s![0, .., t]).to_owned();
@@ -349,7 +325,7 @@ fn tdt_decode(
             .map_err(|e| Error::Other(format!("frame reshape: {e}")))?
             .to_owned();
 
-        let targets = Array2::from_shape_vec((1, 1), vec![state.last_token])
+        let targets = Array2::from_shape_vec((1, 1), vec![last_token])
             .map_err(|e| Error::Other(format!("targets: {e}")))?;
 
         let target_length = Array1::from_vec(vec![1i32]);
@@ -357,8 +333,8 @@ fn tdt_decode(
             "encoder_outputs" => ort::value::TensorRef::from_array_view(frame.view())?,
             "targets" => ort::value::TensorRef::from_array_view(targets.view())?,
             "target_length" => ort::value::TensorRef::from_array_view(target_length.view())?,
-            "input_states_1" => ort::value::TensorRef::from_array_view(state.state_h.view())?,
-            "input_states_2" => ort::value::TensorRef::from_array_view(state.state_c.view())?
+            "input_states_1" => ort::value::TensorRef::from_array_view(state_h.view())?,
+            "input_states_2" => ort::value::TensorRef::from_array_view(state_c.view())?
         ];
         let out = decoder.run(dec_inputs)?;
 
@@ -383,26 +359,26 @@ fn tdt_decode(
         if token_id != blank_id {
             if let Ok((sh, sd)) = extract_f32(&out["output_states_1"]) {
                 if let Ok(arr) = Array3::from_shape_vec((sh[0], sh[1], sh[2]), sd) {
-                    state.state_h = arr;
+                    state_h = arr;
                 }
             }
             if let Ok((sh, sd)) = extract_f32(&out["output_states_2"]) {
                 if let Ok(arr) = Array3::from_shape_vec((sh[0], sh[1], sh[2]), sd) {
-                    state.state_c = arr;
+                    state_c = arr;
                 }
             }
             tokens.push(token_id);
             frame_indices.push(t);
-            state.last_token = token_id as i32;
-            state.emitted += 1;
+            last_token = token_id as i32;
+            emitted_at_t += 1;
         }
 
         if dur > 0 {
             t += dur;
-            state.emitted = 0;
-        } else if token_id == blank_id || state.emitted >= max_tokens_per_step {
+            emitted_at_t = 0;
+        } else if token_id == blank_id || emitted_at_t >= max_tokens_per_step {
             t += 1;
-            state.emitted = 0;
+            emitted_at_t = 0;
         }
     }
 
@@ -411,12 +387,21 @@ fn tdt_decode(
 
 /// Streaming session for the Parakeet ONNX engine.
 ///
-/// v1 architecture: append audio to an internal buffer, recompute mel + run
-/// the encoder over the full buffer on every `push`, and resume the TDT
-/// decoder from the previous time-step. Quadratic in audio length;
-/// acceptable for short dictation utterances where each encoder pass is
-/// tens of milliseconds on Apple Silicon. A follow-up can swap this for
-/// chunked-attention encoder state without changing the public API.
+/// Each `push` appends audio to the internal buffer, runs the encoder over
+/// the full buffer, and runs a fresh TDT decode from t=0. The cumulative
+/// text in `PartialTranscript::text` is therefore byte-identical to what
+/// `transcribe()` would return on the same audio at every step.
+///
+/// This is quadratic in audio length: acceptable for short dictation
+/// utterances where each encoder pass is tens of milliseconds on Apple
+/// Silicon. A follow-up can swap this for chunked-attention encoder state
+/// without changing the public API.
+///
+/// Why re-decode each push: Parakeet's Conformer encoder is non-causal, so
+/// the encoder output for the same early time-frames is not stable as the
+/// buffer grows. An incremental decode that committed tokens off whatever
+/// encoder context was available at the time of each push would drift
+/// from the one-shot output on utterances longer than ~20s.
 struct ParakeetStreamSession {
     encoder: Arc<Mutex<ort::session::Session>>,
     decoder: Arc<Mutex<ort::session::Session>>,
@@ -424,13 +409,11 @@ struct ParakeetStreamSession {
     vocab_size: usize,
     sample_rate: u32,
     audio_buffer: Vec<f32>,
-    /// Encoder time-step the previous decode left off at.
-    last_frame_index: usize,
-    state: TdtDecodeState,
-    /// Cumulative tokens emitted since the session opened.
-    tokens: Vec<usize>,
-    /// Cumulative encoder frame indices for each token in `tokens`.
-    frame_indices: Vec<usize>,
+    /// Cumulative text emitted at the end of the previous `push`. Used to
+    /// compute `PartialTranscript::delta` for the next call.
+    last_text: String,
+    /// Cumulative segments emitted at the end of the previous `push`.
+    last_segments: Vec<Segment>,
     finished: bool,
 }
 
@@ -447,57 +430,48 @@ impl ParakeetStreamSession {
         }
     }
 
-    /// Returns `(new_tokens, new_frame_indices, timestamp_dim)`.
-    ///
-    /// The decoder walks the real time axis (`shape()[2]`), which is what
-    /// `last_frame_index` tracks. The `timestamp_dim` returned here is
-    /// `shape()[1]` instead, matching the value the one-shot path passes to
-    /// `build_result` so per-segment timestamps come out the same as today.
-    fn run_step(&mut self) -> Result<(Vec<usize>, Vec<usize>, usize)> {
+    /// Run the encoder + a fresh TDT decode over the full audio buffer and
+    /// build a `TranscribeResult` with the same shape as the one-shot path.
+    fn transcribe_full(&self) -> Result<TranscribeResult> {
         if self.audio_buffer.is_empty() {
-            return Ok((Vec::new(), Vec::new(), 0));
+            return Ok(TranscribeResult { text: String::new(), segments: Vec::new() });
         }
         let enc_array = {
             let mut encoder = self.encoder.lock().expect("parakeet encoder mutex poisoned");
             run_encoder(&mut encoder, &self.audio_buffer)?
         };
-        let time_steps = enc_array.shape()[2];
         let timestamp_dim = enc_array.shape()[1];
 
-        if self.last_frame_index >= time_steps {
-            return Ok((Vec::new(), Vec::new(), timestamp_dim));
-        }
-
-        let (new_tokens, new_frames) = {
+        let (tokens, frame_indices) = {
             let mut decoder = self.decoder.lock().expect("parakeet decoder mutex poisoned");
-            tdt_decode(
-                &mut decoder,
-                &enc_array,
-                self.vocab_size,
-                &mut self.state,
-                self.last_frame_index,
-            )?
+            tdt_decode(&mut decoder, &enc_array, self.vocab_size)?
         };
-        self.last_frame_index = time_steps;
-        Ok((new_tokens, new_frames, timestamp_dim))
-    }
 
-    fn partial_text(&self, tokens: &[usize]) -> (String, Vec<Segment>) {
-        let mut text = String::new();
-        let mut segments = Vec::new();
-        for &tok in tokens {
-            if tok < self.vocab.len() {
-                let word = self.vocab[tok].replace('▁', " ");
-                text.push_str(&word);
-                segments.push(Segment {
-                    start_secs: 0.0,
-                    end_secs: 0.0,
-                    text: word,
-                });
-            }
-        }
-        (text, segments)
+        Ok(build_result(
+            &self.vocab,
+            &tokens,
+            &frame_indices,
+            self.audio_buffer.len(),
+            timestamp_dim,
+        ))
     }
+}
+
+/// Byte length of the longest common prefix of two `&str`s, rounded down
+/// to the nearest char boundary so the resulting suffix is still valid
+/// UTF-8.
+fn common_prefix_len(a: &str, b: &str) -> usize {
+    let max = a.len().min(b.len());
+    let bytes_a = a.as_bytes();
+    let bytes_b = b.as_bytes();
+    let mut i = 0;
+    while i < max && bytes_a[i] == bytes_b[i] {
+        i += 1;
+    }
+    while i > 0 && !a.is_char_boundary(i) {
+        i -= 1;
+    }
+    i
 }
 
 impl StreamSession for ParakeetStreamSession {
@@ -506,13 +480,15 @@ impl StreamSession for ParakeetStreamSession {
             return Err(Error::Other("stream session already finished".into()));
         }
         self.append_audio(audio);
-        let (new_tokens, new_frames, _timestamp_dim) = self.run_step()?;
-        let (text, segments) = self.partial_text(&new_tokens);
-        self.tokens.extend(new_tokens);
-        self.frame_indices.extend(new_frames);
+        let result = self.transcribe_full()?;
+        let prefix = common_prefix_len(&self.last_text, &result.text);
+        let delta = result.text[prefix..].to_string();
+        self.last_text = result.text.clone();
+        self.last_segments = result.segments.clone();
         Ok(PartialTranscript {
-            text,
-            segments,
+            text: result.text,
+            delta,
+            segments: result.segments,
             is_final: false,
         })
     }
@@ -521,18 +497,15 @@ impl StreamSession for ParakeetStreamSession {
         if self.finished {
             return Err(Error::Other("stream session already finished".into()));
         }
-        // Drain any remaining encoder frames the previous push left behind.
-        let (new_tokens, new_frames, timestamp_dim) = self.run_step()?;
-        self.tokens.extend(new_tokens);
-        self.frame_indices.extend(new_frames);
+        // Each `push` already produced a full re-decode of the audio
+        // buffer, so the cached text and segments are the final result.
+        // If the caller never pushed any audio, both are empty.
+        let result = TranscribeResult {
+            text: std::mem::take(&mut self.last_text),
+            segments: std::mem::take(&mut self.last_segments),
+        };
         self.finished = true;
-        Ok(build_result(
-            &self.vocab,
-            &self.tokens,
-            &self.frame_indices,
-            self.audio_buffer.len(),
-            timestamp_dim,
-        ))
+        Ok(result)
     }
 }
 

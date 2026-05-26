@@ -38,13 +38,16 @@ fn load_wav(path: &str) -> (Vec<f32>, u32) {
     (audio, spec.sample_rate)
 }
 
-fn normalize(s: &str) -> String {
-    s.split_whitespace().collect::<Vec<_>>().join(" ")
-}
-
 #[test]
 #[ignore = "needs cached parakeet weights and tests/fixtures/streaming.wav"]
 fn streaming_matches_one_shot() {
+    // The streaming session re-decodes the full audio buffer on every push
+    // (see `ParakeetStreamSession` in src/parakeet.rs), so the cumulative
+    // text after each push is byte-identical to what `transcribe()` would
+    // return on the same audio. The trade-off is that early tokens can be
+    // rewritten retroactively as later pushes give the encoder more
+    // context: consumers should treat `PartialTranscript::text` as
+    // authoritative and `PartialTranscript::delta` as a hint.
     let fixture = "tests/fixtures/streaming.wav";
     let (audio, sample_rate) = load_wav(fixture);
     assert_eq!(sample_rate, 16000, "fixture must be 16 kHz mono");
@@ -66,10 +69,8 @@ fn streaming_matches_one_shot() {
     }
     let streamed = session.finish().expect("finish stream");
 
-    let expected = normalize(&one_shot.text);
-    let got = normalize(&streamed.text);
     assert_eq!(
-        got, expected,
-        "streamed transcript does not match one-shot transcript"
+        streamed.text, one_shot.text,
+        "streamed transcript does not byte-match one-shot transcript"
     );
 }

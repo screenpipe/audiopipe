@@ -42,21 +42,39 @@ pub(crate) trait Engine: Send + Sync {
 }
 
 /// Incremental transcription result for a streaming session.
+///
+/// `text` is the full cumulative transcript so far and replaces any prior
+/// partial. Consumers should treat it as authoritative: render `text` on
+/// every push.
+///
+/// `delta` is the tail that was added since the previous push. It is a
+/// hint: when a later push gives the encoder more context, the decoder
+/// may rewrite tokens that were already emitted (Parakeet's Conformer
+/// encoder is non-causal, so encoder outputs for the same early frames
+/// are not stable across pushes). When that happens, `text` absorbs the
+/// rewrite and `delta` is just the new tail after the longest common
+/// prefix. UIs that want to append to a live overlay can use `delta`,
+/// but they must also be prepared to redraw the overlay from `text`
+/// when the prefix changes.
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct PartialTranscript {
-    /// Text emitted since the previous call. Empty when no new tokens crossed
-    /// the decode threshold for this chunk.
+    /// Cumulative transcript so far. Replaces any prior partial.
     pub text: String,
-    /// Per-segment breakdown of the new tokens.
+    /// Substring at the end of `text` that was added since the previous
+    /// push. Empty when no new tokens were emitted this chunk.
+    pub delta: String,
+    /// Cumulative per-segment breakdown (same shape as
+    /// `TranscribeResult::segments`).
     pub segments: Vec<Segment>,
-    /// True when the caller has flushed the session via `finish()`.
+    /// True only on the final push returned by `finish()`.
     pub is_final: bool,
 }
 
 /// Stateful session for streaming transcription.
 pub trait StreamSession: Send {
-    /// Push a chunk of audio. Returns whatever new tokens the decoder emitted
-    /// on top of the previously-emitted prefix.
+    /// Push a chunk of audio and return the updated cumulative transcript.
+    /// `PartialTranscript::text` is the full transcript so far;
+    /// `PartialTranscript::delta` is the tail added since the previous push.
     fn push(&mut self, audio: &[f32]) -> Result<PartialTranscript>;
 
     /// Finalize the session and return the full cumulative transcript. After
