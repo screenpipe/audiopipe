@@ -24,6 +24,9 @@ pub enum Error {
     #[error("decode error: {0}")]
     Decode(String),
 
+    #[error("operation not supported by this engine")]
+    NotSupported,
+
     #[error("{0}")]
     Other(String),
 }
