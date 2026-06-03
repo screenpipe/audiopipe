@@ -253,6 +253,15 @@ impl Model {
     /// Load a model from a local directory containing ONNX files.
     pub fn from_dir(path: &std::path::Path, engine_type: &str) -> Result<Self> {
         match engine_type {
+            #[cfg(feature = "parakeet-mlx")]
+            "parakeet-mlx" => {
+                let engine = crate::parakeet_mlx::ParakeetMlxEngine::from_dir(
+                    path,
+                    "parakeet-tdt-0.6b-v3",
+                    ParakeetPrecision::Bf16,
+                )?;
+                Ok(Self { inner: Box::new(engine), uses_gpu: true })
+            }
             #[cfg(feature = "parakeet")]
             "parakeet" => {
                 let engine = crate::parakeet::ParakeetEngine::from_dir(path)?;

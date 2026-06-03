@@ -52,6 +52,11 @@ name = "convert_to_bf16"
 path = "examples/convert_to_bf16.rs"
 required-features = ["parakeet-mlx"]
 
+[[example]]
+name = "parity_check"
+path = "examples/parity_check.rs"
+required-features = ["parakeet-mlx"]
+
 [features]
 default = ["ort-defaults"]
 
