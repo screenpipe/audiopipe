@@ -39,5 +39,7 @@ pub mod qwen3_asr_antirez;
 pub mod parakeet_mlx;
 
 pub use error::Error;
-pub use model::{Model, Segment, TranscribeOptions, TranscribeResult};
+pub use model::{
+    Model, PartialTranscript, Segment, StreamSession, TranscribeOptions, TranscribeResult,
+};
 

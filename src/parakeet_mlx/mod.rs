@@ -22,11 +22,21 @@ extern "C" {
     fn mlx_default_gpu_stream_new() -> MlxStream;
     fn mlx_synchronize(stream: MlxStream) -> std::ffi::c_int;
     fn mlx_stream_free(stream: MlxStream) -> std::ffi::c_int;
+    // Metal allocator/cache management. MLX keeps freed device buffers in a
+    // reuse cache that, left unbounded, climbs to many GB of IOAccelerator
+    // memory during streaming (every `push` re-decodes the whole audio buffer,
+    // so each call allocates a fresh, ever-larger working set). `set_cache_limit`
+    // caps the reuse cache; `clear_cache` returns it to the OS.
+    fn mlx_clear_cache() -> std::ffi::c_int;
+    fn mlx_set_cache_limit(res: *mut usize, limit: usize) -> std::ffi::c_int;
+    fn mlx_get_active_memory(res: *mut usize) -> std::ffi::c_int;
+    fn mlx_get_cache_memory(res: *mut usize) -> std::ffi::c_int;
 }
 
 use std::collections::HashMap;
 use std::io::BufRead;
 use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
 
 use mlx_rs::Array;
 
@@ -35,7 +45,9 @@ use self::decode::greedy_tdt_decode;
 use self::rnnt::{JointNetwork, PredictNetwork};
 use crate::error::{Error, Result};
 use crate::hf_cache;
-use crate::model::{Engine, Segment, TranscribeOptions, TranscribeResult};
+use crate::model::{
+    Engine, PartialTranscript, Segment, StreamSession, TranscribeOptions, TranscribeResult,
+};
 
 // ---------------------------------------------------------------------------
 // Model constants (Parakeet TDT 0.6B)
@@ -75,10 +87,17 @@ const HF_REPO: &str = "mlx-community/parakeet-tdt-0.6b-v3";
 // ---------------------------------------------------------------------------
 
 /// Parakeet TDT engine using MLX for inference on Apple Silicon.
+///
+/// The three nn modules (`conformer`, `predict`, `joint`) live behind
+/// `Arc<Mutex<_>>` so a streaming session can hold its own handles without
+/// forcing a lifetime on the `Engine` trait. Contention is not a concern:
+/// `Model` already serializes `transcribe` / `transcribe_stream` callers
+/// through `&mut self`, and a stream session owns its mutex acquisitions
+/// for the duration of one `push` or `finish` call.
 pub struct ParakeetMlxEngine {
-    conformer: conformer::Conformer,
-    predict: PredictNetwork,
-    joint: JointNetwork,
+    conformer: Arc<Mutex<conformer::Conformer>>,
+    predict: Arc<Mutex<PredictNetwork>>,
+    joint: Arc<Mutex<JointNetwork>>,
     mel_config: MelConfig,
     vocab: Vec<String>,
     durations: Vec<usize>,
@@ -167,6 +186,7 @@ impl ParakeetMlxEngine {
     /// - `model.safetensors`
     /// - `vocab.txt` (one token per line)
     pub fn from_dir(dir: &Path, name: &str) -> Result<Self> {
+        init_mlx_cache_limit();
         // --- Load vocabulary from config.json → joint.vocabulary ---
         let config_path = dir.join("config.json");
         let vocab = if config_path.exists() {
@@ -253,9 +273,9 @@ impl ParakeetMlxEngine {
             * mel_config.hop_length as f64;
 
         Ok(Self {
-            conformer: encoder,
-            predict,
-            joint,
+            conformer: Arc::new(Mutex::new(encoder)),
+            predict: Arc::new(Mutex::new(predict)),
+            joint: Arc::new(Mutex::new(joint)),
             mel_config,
             vocab,
             durations: DURATIONS.to_vec(),
@@ -288,61 +308,172 @@ impl Engine for ParakeetMlxEngine {
             });
         }
 
-        // --- Convert to mlx Array ---
-        let audio_arr = Array::from_slice(&audio_16k, &[audio_16k.len() as i32]);
+        let mut conformer = self
+            .conformer
+            .lock()
+            .expect("parakeet-mlx conformer mutex poisoned");
+        let mut predict = self
+            .predict
+            .lock()
+            .expect("parakeet-mlx predict mutex poisoned");
+        let mut joint = self
+            .joint
+            .lock()
+            .expect("parakeet-mlx joint mutex poisoned");
 
-        // --- Compute log-mel spectrogram: [1, T, n_mels] ---
-        let mel = get_logmel(&audio_arr, &self.mel_config)
-            .map_err(|e| Error::Other(format!("mel computation failed: {e}")))?;
-        tracing::info!("mel: shape={:?}", mel.shape());
-
-        // --- Conformer encoder: [1, T, 128] -> [1, T/8, 1024] ---
-        let (encoder_out, _lengths) = self.conformer.forward(&mel, None)
-            .map_err(|e| Error::Other(format!("encoder failed: {e}")))?;
-        // Evaluate and check range
-        mlx_rs::transforms::eval([&encoder_out])
-            .map_err(|e| Error::Other(format!("eval failed: {e}")))?;
-        let enc_slice: Vec<f32> = encoder_out.as_slice().to_vec();
-        let enc_min = enc_slice.iter().copied().fold(f32::MAX, f32::min);
-        let enc_max = enc_slice.iter().copied().fold(f32::MIN, f32::max);
-        let enc_mean = enc_slice.iter().sum::<f32>() / enc_slice.len() as f32;
-        tracing::info!("encoder_out: shape={:?}, range=[{:.6}, {:.6}], mean={:.6}",
-            encoder_out.shape(), enc_min, enc_max, enc_mean);
-        // Print first 10 values of frame 0 for comparison with Python
-        tracing::info!("enc[0,0,:10] = {:?}", &enc_slice[..10.min(enc_slice.len())]);
-
-        // --- TDT greedy decode ---
-        let (text, segments) = greedy_tdt_decode(
-            &encoder_out,
-            &mut self.predict,
-            &mut self.joint,
+        let result = run_full_pipeline(
+            &audio_16k,
+            &mut conformer,
+            &mut predict,
+            &mut joint,
+            &self.mel_config,
             &self.vocab,
             &self.durations,
-            BLANK_ID,
             self.time_ratio,
-        )
-        .map_err(|e| Error::Decode(format!("greedy TDT decode failed: {e}")))?;
+        )?;
 
-        // Force ALL pending Metal GPU commands to complete before returning.
-        // Without this, the GPU_LOCK in Model releases while Metal command
-        // buffers are still in-flight on GCD dispatch queues. If another
-        // transcription starts before they finish, overlapping Metal
-        // submissions cause MLX to call abort().
-        //
-        // mlx_synchronize(stream) blocks until all enqueued operations on
-        // the stream have completed, including their Metal callbacks.
-        unsafe {
-            let stream = mlx_default_gpu_stream_new();
-            mlx_synchronize(stream);
-            mlx_stream_free(stream);
-        };
+        gpu_synchronize();
+        gpu_clear_cache();
 
-        Ok(TranscribeResult { text, segments })
+        Ok(result)
+    }
+
+    fn transcribe_stream(
+        &mut self,
+        sample_rate: u32,
+        _opts: &TranscribeOptions,
+    ) -> Result<Box<dyn StreamSession + Send>> {
+        Ok(Box::new(ParakeetMlxStreamSession {
+            conformer: self.conformer.clone(),
+            predict: self.predict.clone(),
+            joint: self.joint.clone(),
+            mel_config: self.mel_config.clone(),
+            vocab: self.vocab.clone(),
+            durations: self.durations.clone(),
+            time_ratio: self.time_ratio,
+            sample_rate,
+            audio_buffer: Vec::new(),
+            last_text: String::new(),
+            last_segments: Vec::new(),
+            finished: false,
+        }))
     }
 
     fn name(&self) -> &str {
         &self.name
     }
+}
+
+/// Run the full mel -> encoder -> TDT decode pipeline on a 16 kHz buffer.
+///
+/// Pulled out of `transcribe` so the streaming session can reuse the same
+/// code path. Callers hold the locks for `conformer`, `predict`, `joint`
+/// already.
+#[allow(clippy::too_many_arguments)]
+fn run_full_pipeline(
+    audio_16k: &[f32],
+    conformer: &mut conformer::Conformer,
+    predict: &mut PredictNetwork,
+    joint: &mut JointNetwork,
+    mel_config: &MelConfig,
+    vocab: &[String],
+    durations: &[usize],
+    time_ratio: f64,
+) -> Result<TranscribeResult> {
+    let audio_arr = Array::from_slice(audio_16k, &[audio_16k.len() as i32]);
+
+    let mel = get_logmel(&audio_arr, mel_config)
+        .map_err(|e| Error::Other(format!("mel computation failed: {e}")))?;
+
+    let (encoder_out, _lengths) = conformer
+        .forward(&mel, None)
+        .map_err(|e| Error::Other(format!("encoder failed: {e}")))?;
+    mlx_rs::transforms::eval([&encoder_out])
+        .map_err(|e| Error::Other(format!("eval failed: {e}")))?;
+
+    let (text, segments) = greedy_tdt_decode(
+        &encoder_out,
+        predict,
+        joint,
+        vocab,
+        durations,
+        BLANK_ID,
+        time_ratio,
+    )
+    .map_err(|e| Error::Decode(format!("greedy TDT decode failed: {e}")))?;
+
+    Ok(TranscribeResult { text, segments })
+}
+
+/// Force all pending Metal GPU commands to complete.
+///
+/// Without this, the GPU_LOCK in `Model` releases while Metal command
+/// buffers are still in-flight on GCD dispatch queues. If another
+/// transcription starts before they finish, overlapping Metal submissions
+/// cause MLX to call `abort()`.
+///
+/// Called at the end of `transcribe`, `push`, and `finish` to keep the
+/// process-wide GPU-buffer-lifetime contract intact.
+fn gpu_synchronize() {
+    unsafe {
+        let stream = mlx_default_gpu_stream_new();
+        mlx_synchronize(stream);
+        mlx_stream_free(stream);
+    }
+}
+
+/// Default ceiling for MLX's Metal buffer-reuse cache, in bytes (512 MiB).
+/// Active (in-flight) allocations are not capped by this; only the pool of
+/// freed-but-retained buffers is, which is what otherwise grows unbounded.
+const MLX_CACHE_LIMIT_BYTES: usize = 512 * 1024 * 1024;
+
+/// Install a process-wide cap on MLX's Metal buffer-reuse cache. Idempotent —
+/// runs once even though engine construction may happen per model load.
+/// Override the ceiling with `AUDIOPIPE_MLX_CACHE_LIMIT_MB`, or disable it
+/// entirely with `AUDIOPIPE_MLX_CACHE_LIMIT_MB=0`.
+fn init_mlx_cache_limit() {
+    static ONCE: std::sync::Once = std::sync::Once::new();
+    ONCE.call_once(|| {
+        let limit = std::env::var("AUDIOPIPE_MLX_CACHE_LIMIT_MB")
+            .ok()
+            .and_then(|s| s.trim().parse::<usize>().ok())
+            .map_or(MLX_CACHE_LIMIT_BYTES, |mb| mb * 1024 * 1024);
+        if limit == 0 {
+            return;
+        }
+        let mut prev = 0usize;
+        unsafe {
+            mlx_set_cache_limit(&mut prev, limit);
+        }
+        tracing::debug!(limit_bytes = limit, "parakeet-mlx: MLX cache limit set");
+    });
+}
+
+/// Return MLX's Metal buffer cache (freed-but-retained) to the OS. Cheap; the
+/// next allocation simply re-acquires from Metal. Streaming re-decodes the
+/// whole buffer every push, so without this the cache accumulates the peak
+/// working set across the entire session. Opt out with
+/// `AUDIOPIPE_NO_MLX_CACHE_CLEAR` if it ever regresses throughput.
+fn gpu_clear_cache() {
+    if std::env::var_os("AUDIOPIPE_NO_MLX_CACHE_CLEAR").is_some() {
+        return;
+    }
+    unsafe {
+        mlx_clear_cache();
+    }
+}
+
+/// MLX memory counters `(active_bytes, cache_bytes)`. Diagnostics for tests
+/// and the `mlx_stream_leak_probe` example.
+#[must_use]
+pub fn mlx_memory_stats() -> (usize, usize) {
+    let mut active = 0usize;
+    let mut cache = 0usize;
+    unsafe {
+        mlx_get_active_memory(&mut active);
+        mlx_get_cache_memory(&mut cache);
+    }
+    (active, cache)
 }
 
 // ---------------------------------------------------------------------------
@@ -466,6 +597,154 @@ fn hf_get_with_retry(
         }
     }
     Err(last_err)
+}
+
+// ---------------------------------------------------------------------------
+// Streaming session
+// ---------------------------------------------------------------------------
+
+/// Streaming session for the Parakeet MLX engine.
+///
+/// Each `push` appends audio to the internal buffer, runs the encoder over
+/// the full buffer, and runs a fresh TDT decode from t=0. The cumulative
+/// text in `PartialTranscript::text` is therefore byte-identical to what
+/// `transcribe()` would return on the same audio at every step.
+///
+/// This mirrors the Parakeet ONNX streaming session: re-decode the full
+/// growing buffer per push. Quadratic in audio length; acceptable for
+/// typical dictation under 30 seconds on Apple Silicon, where MLX is
+/// faster than ONNX on M-series for the same model. A follow-up can swap
+/// this for chunked-attention encoder state without changing the public
+/// API.
+///
+/// Why re-decode each push: Parakeet's Conformer encoder is non-causal,
+/// so the encoder output for the same early time-frames is not stable as
+/// the buffer grows. An incremental decode that committed tokens off
+/// whatever encoder context was available at the time of each push would
+/// drift from the one-shot output on utterances longer than ~20s.
+struct ParakeetMlxStreamSession {
+    conformer: Arc<Mutex<conformer::Conformer>>,
+    predict: Arc<Mutex<PredictNetwork>>,
+    joint: Arc<Mutex<JointNetwork>>,
+    mel_config: MelConfig,
+    vocab: Vec<String>,
+    durations: Vec<usize>,
+    time_ratio: f64,
+    sample_rate: u32,
+    audio_buffer: Vec<f32>,
+    /// Cumulative text emitted at the end of the previous `push`. Used to
+    /// compute `PartialTranscript::delta` for the next call.
+    last_text: String,
+    /// Cumulative segments emitted at the end of the previous `push`.
+    last_segments: Vec<Segment>,
+    finished: bool,
+}
+
+// SAFETY: same invariant as `ParakeetMlxEngine`. The session is held behind
+// `&mut self` on the `StreamSession` trait surface and behind `Box<dyn
+// StreamSession + Send>`, so only one thread at a time touches the inner
+// MLX state. The `Array` handles inside the locked networks are opaque
+// pointers managed by the MLX C library.
+unsafe impl Send for ParakeetMlxStreamSession {}
+
+impl ParakeetMlxStreamSession {
+    fn append_audio(&mut self, audio: &[f32]) {
+        if audio.is_empty() {
+            return;
+        }
+        if self.sample_rate == 16000 {
+            self.audio_buffer.extend_from_slice(audio);
+        } else {
+            let resampled = crate::audio::resample(audio, self.sample_rate, 16000);
+            self.audio_buffer.extend_from_slice(&resampled);
+        }
+    }
+
+    fn transcribe_full(&self) -> Result<TranscribeResult> {
+        if self.audio_buffer.is_empty() {
+            return Ok(TranscribeResult {
+                text: String::new(),
+                segments: Vec::new(),
+            });
+        }
+        let mut conformer = self
+            .conformer
+            .lock()
+            .expect("parakeet-mlx conformer mutex poisoned");
+        let mut predict = self
+            .predict
+            .lock()
+            .expect("parakeet-mlx predict mutex poisoned");
+        let mut joint = self
+            .joint
+            .lock()
+            .expect("parakeet-mlx joint mutex poisoned");
+        run_full_pipeline(
+            &self.audio_buffer,
+            &mut conformer,
+            &mut predict,
+            &mut joint,
+            &self.mel_config,
+            &self.vocab,
+            &self.durations,
+            self.time_ratio,
+        )
+    }
+}
+
+/// Byte length of the longest common prefix of two `&str`s, rounded down
+/// to the nearest char boundary so the resulting suffix is still valid
+/// UTF-8.
+fn common_prefix_len(a: &str, b: &str) -> usize {
+    let max = a.len().min(b.len());
+    let bytes_a = a.as_bytes();
+    let bytes_b = b.as_bytes();
+    let mut i = 0;
+    while i < max && bytes_a[i] == bytes_b[i] {
+        i += 1;
+    }
+    while i > 0 && !a.is_char_boundary(i) {
+        i -= 1;
+    }
+    i
+}
+
+impl StreamSession for ParakeetMlxStreamSession {
+    fn push(&mut self, audio: &[f32]) -> Result<PartialTranscript> {
+        if self.finished {
+            return Err(Error::Other("stream session already finished".into()));
+        }
+        self.append_audio(audio);
+        let result = self.transcribe_full()?;
+        gpu_synchronize();
+        let prefix = common_prefix_len(&self.last_text, &result.text);
+        let delta = result.text[prefix..].to_string();
+        self.last_text = result.text.clone();
+        self.last_segments = result.segments.clone();
+        Ok(PartialTranscript {
+            text: result.text,
+            delta,
+            segments: result.segments,
+            is_final: false,
+        })
+    }
+
+    fn finish(&mut self) -> Result<TranscribeResult> {
+        if self.finished {
+            return Err(Error::Other("stream session already finished".into()));
+        }
+        // Each `push` already produced a full re-decode of the audio
+        // buffer, so the cached text and segments are the final result.
+        // If the caller never pushed any audio, both are empty.
+        let result = TranscribeResult {
+            text: std::mem::take(&mut self.last_text),
+            segments: std::mem::take(&mut self.last_segments),
+        };
+        gpu_synchronize();
+        gpu_clear_cache();
+        self.finished = true;
+        Ok(result)
+    }
 }
 
 #[cfg(test)]

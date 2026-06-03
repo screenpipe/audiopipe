@@ -27,7 +27,59 @@ pub struct Model {
 /// Engine trait — implemented by each backend (Parakeet, Whisper, etc.).
 pub(crate) trait Engine: Send + Sync {
     fn transcribe(&mut self, audio: &[f32], sample_rate: u32, opts: &TranscribeOptions) -> Result<TranscribeResult>;
+
+    /// Open a streaming session. Default impl returns `NotSupported` so engines
+    /// without streaming support compile unchanged.
+    fn transcribe_stream(
+        &mut self,
+        _sample_rate: u32,
+        _opts: &TranscribeOptions,
+    ) -> Result<Box<dyn StreamSession + Send>> {
+        Err(Error::NotSupported)
+    }
+
     fn name(&self) -> &str;
+}
+
+/// Incremental transcription result for a streaming session.
+///
+/// `text` is the full cumulative transcript so far and replaces any prior
+/// partial. Consumers should treat it as authoritative: render `text` on
+/// every push.
+///
+/// `delta` is the tail that was added since the previous push. It is a
+/// hint: when a later push gives the encoder more context, the decoder
+/// may rewrite tokens that were already emitted (Parakeet's Conformer
+/// encoder is non-causal, so encoder outputs for the same early frames
+/// are not stable across pushes). When that happens, `text` absorbs the
+/// rewrite and `delta` is just the new tail after the longest common
+/// prefix. UIs that want to append to a live overlay can use `delta`,
+/// but they must also be prepared to redraw the overlay from `text`
+/// when the prefix changes.
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct PartialTranscript {
+    /// Cumulative transcript so far. Replaces any prior partial.
+    pub text: String,
+    /// Substring at the end of `text` that was added since the previous
+    /// push. Empty when no new tokens were emitted this chunk.
+    pub delta: String,
+    /// Cumulative per-segment breakdown (same shape as
+    /// `TranscribeResult::segments`).
+    pub segments: Vec<Segment>,
+    /// True only on the final push returned by `finish()`.
+    pub is_final: bool,
+}
+
+/// Stateful session for streaming transcription.
+pub trait StreamSession: Send {
+    /// Push a chunk of audio and return the updated cumulative transcript.
+    /// `PartialTranscript::text` is the full transcript so far;
+    /// `PartialTranscript::delta` is the tail added since the previous push.
+    fn push(&mut self, audio: &[f32]) -> Result<PartialTranscript>;
+
+    /// Finalize the session and return the full cumulative transcript. After
+    /// `finish` the session is unusable.
+    fn finish(&mut self) -> Result<TranscribeResult>;
 }
 
 /// Options for transcription.
@@ -221,6 +273,28 @@ impl Model {
         self.inner.transcribe(&resampled, 16000, &opts)
     }
 
+    /// Open a streaming session for incremental transcription.
+    ///
+    /// The session expects audio at `sample_rate`. Returns `Error::NotSupported`
+    /// for engines that have no streaming implementation.
+    ///
+    /// For GPU-backed engines the global GPU lock is taken inside each
+    /// `push` / `finish` call rather than held for the whole session, because
+    /// `MutexGuard` is not `Send`: holding it across the session would prevent
+    /// callers from moving the session between threads (e.g. a `tokio` task).
+    pub fn transcribe_stream(
+        &mut self,
+        sample_rate: u32,
+        opts: TranscribeOptions,
+    ) -> Result<Box<dyn StreamSession + Send>> {
+        let inner = self.inner.transcribe_stream(sample_rate, &opts)?;
+        if self.uses_gpu {
+            Ok(Box::new(GuardedStreamSession { inner }))
+        } else {
+            Ok(inner)
+        }
+    }
+
     /// Acquire the GPU lock if this model uses a GPU backend.
     /// Returns None for CPU/ONNX backends (no serialization needed).
     fn acquire_gpu_lock(&self) -> Option<std::sync::MutexGuard<'static, ()>> {
@@ -236,5 +310,35 @@ impl Model {
     /// Model name.
     pub fn name(&self) -> &str {
         self.inner.name()
+    }
+}
+
+/// Acquire the process-wide GPU lock. Free helper so streaming sessions can
+/// take the lock per `push` / `finish` without holding a guard across calls
+/// (`MutexGuard` is `!Send`, which would block moving a session between
+/// threads).
+fn acquire_gpu_lock_static() -> std::sync::MutexGuard<'static, ()> {
+    match GPU_LOCK.lock() {
+        Ok(guard) => guard,
+        Err(poisoned) => poisoned.into_inner(),
+    }
+}
+
+/// Serializes streaming GPU work through the process-wide GPU lock. Each
+/// `push` / `finish` acquires and releases the guard so the session itself
+/// stays `Send`.
+struct GuardedStreamSession {
+    inner: Box<dyn StreamSession + Send>,
+}
+
+impl StreamSession for GuardedStreamSession {
+    fn push(&mut self, audio: &[f32]) -> Result<PartialTranscript> {
+        let _guard = acquire_gpu_lock_static();
+        self.inner.push(audio)
+    }
+
+    fn finish(&mut self) -> Result<TranscribeResult> {
+        let _guard = acquire_gpu_lock_static();
+        self.inner.finish()
     }
 }
