@@ -49,7 +49,7 @@ pub(crate) fn to_weight_dtype(a: &Array) -> Array {
 
 /// Up-cast a (possibly bf16) tensor to f32 for diagnostics that read it back
 /// via `as_slice::<f32>()`, which panics on a dtype mismatch.
-fn to_weight_dtype_f32(a: &Array) -> Array {
+pub(crate) fn to_weight_dtype_f32(a: &Array) -> Array {
     a.as_dtype(Dtype::Float32).unwrap_or_else(|_| a.clone())
 }
 

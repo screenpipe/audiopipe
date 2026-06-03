@@ -133,36 +133,36 @@ pub fn greedy_tdt_decode(
 
         if t < 2 || (t >= 48 && t < 52) {
             mlx_rs::transforms::eval([&pred_out]).ok();
-            let pv: Vec<f32> = pred_out.as_slice().to_vec();
+            let pv: Vec<f32> = crate::parakeet_mlx::to_weight_dtype_f32(&pred_out).as_slice().to_vec();
             let pmin = pv.iter().copied().fold(f32::MAX, f32::min);
             let pmax = pv.iter().copied().fold(f32::MIN, f32::max);
             tracing::info!("  pred_out: shape={:?}, range=[{:.4}, {:.4}]", pred_out.shape(), pmin, pmax);
 
             // Check enc_frame and joint intermediate
             mlx_rs::transforms::eval([&enc_frame_2d]).ok();
-            let ev: Vec<f32> = enc_frame_2d.as_slice().to_vec();
+            let ev: Vec<f32> = crate::parakeet_mlx::to_weight_dtype_f32(&enc_frame_2d).as_slice().to_vec();
             tracing::info!("  enc_frame: shape={:?}, range=[{:.4}, {:.4}]",
                 enc_frame_2d.shape(), ev.iter().copied().fold(f32::MAX, f32::min), ev.iter().copied().fold(f32::MIN, f32::max));
 
             mlx_rs::transforms::eval([&joint_out]).ok();
-            let jv: Vec<f32> = joint_out.as_slice().to_vec();
+            let jv: Vec<f32> = crate::parakeet_mlx::to_weight_dtype_f32(&joint_out).as_slice().to_vec();
             tracing::info!("  joint_out: shape={:?}, range=[{:.4}, {:.4}]",
                 joint_out.shape(), jv.iter().copied().fold(f32::MAX, f32::min), jv.iter().copied().fold(f32::MIN, f32::max));
 
             mlx_rs::transforms::eval([&joint_1d]).ok();
-            let j1: Vec<f32> = joint_1d.as_slice().to_vec();
+            let j1: Vec<f32> = crate::parakeet_mlx::to_weight_dtype_f32(&joint_1d).as_slice().to_vec();
             tracing::info!("  joint_1d: shape={:?}, len={}, range=[{:.4}, {:.4}]",
                 joint_1d.shape(), j1.len(), j1.iter().copied().fold(f32::MAX, f32::min), j1.iter().copied().fold(f32::MIN, f32::max));
 
             mlx_rs::transforms::eval([&token_logits]).ok();
-            let tl: Vec<f32> = token_logits.as_slice().to_vec();
+            let tl: Vec<f32> = crate::parakeet_mlx::to_weight_dtype_f32(&token_logits).as_slice().to_vec();
             tracing::info!("  token_logits: shape={:?}, len={}, range=[{:.4}, {:.4}]",
                 token_logits.shape(), tl.len(), tl.iter().copied().fold(f32::MAX, f32::min), tl.iter().copied().fold(f32::MIN, f32::max));
             mlx_rs::transforms::eval([&duration_logits]).ok();
-            let dl: Vec<f32> = duration_logits.as_slice().to_vec();
+            let dl: Vec<f32> = crate::parakeet_mlx::to_weight_dtype_f32(&duration_logits).as_slice().to_vec();
             tracing::info!("  duration_logits: {:?}", dl);
             // Check joint output distribution
-            let joint_vals: Vec<f32> = joint_1d.as_slice().to_vec();
+            let joint_vals: Vec<f32> = crate::parakeet_mlx::to_weight_dtype_f32(&joint_1d).as_slice().to_vec();
             let blank_logit = joint_vals.get(blank_id).copied().unwrap_or(0.0);
             let max_token_logit = joint_vals[..vocab_size_plus_blank].iter().copied().fold(f32::MIN, f32::max);
             let max_token_id = joint_vals[..vocab_size_plus_blank].iter().enumerate().max_by(|a,b| a.1.partial_cmp(b.1).unwrap()).map(|(i,_)| i).unwrap_or(0);

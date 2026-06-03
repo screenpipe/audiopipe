@@ -189,29 +189,30 @@ impl MultiHeadAttention {
 
     /// Load weights from a flattened weight map using the given prefix.
     pub fn load_weights(&mut self, weights: &HashMap<String, Array>, prefix: &str) {
+        use crate::parakeet_mlx::to_weight_dtype;
         if let Some(w) = weights.get(&format!("{prefix}.linear_q.weight")) {
-            self.linear_q.weight = Param::new(w.clone());
+            self.linear_q.weight = Param::new(to_weight_dtype(w));
         }
         if let Some(b) = weights.get(&format!("{prefix}.linear_q.bias")) {
-            self.linear_q.bias = Param::new(Some(b.clone()));
+            self.linear_q.bias = Param::new(Some(to_weight_dtype(b)));
         }
         if let Some(w) = weights.get(&format!("{prefix}.linear_k.weight")) {
-            self.linear_k.weight = Param::new(w.clone());
+            self.linear_k.weight = Param::new(to_weight_dtype(w));
         }
         if let Some(b) = weights.get(&format!("{prefix}.linear_k.bias")) {
-            self.linear_k.bias = Param::new(Some(b.clone()));
+            self.linear_k.bias = Param::new(Some(to_weight_dtype(b)));
         }
         if let Some(w) = weights.get(&format!("{prefix}.linear_v.weight")) {
-            self.linear_v.weight = Param::new(w.clone());
+            self.linear_v.weight = Param::new(to_weight_dtype(w));
         }
         if let Some(b) = weights.get(&format!("{prefix}.linear_v.bias")) {
-            self.linear_v.bias = Param::new(Some(b.clone()));
+            self.linear_v.bias = Param::new(Some(to_weight_dtype(b)));
         }
         if let Some(w) = weights.get(&format!("{prefix}.linear_out.weight")) {
-            self.linear_out.weight = Param::new(w.clone());
+            self.linear_out.weight = Param::new(to_weight_dtype(w));
         }
         if let Some(b) = weights.get(&format!("{prefix}.linear_out.bias")) {
-            self.linear_out.bias = Param::new(Some(b.clone()));
+            self.linear_out.bias = Param::new(Some(to_weight_dtype(b)));
         }
     }
 }
@@ -368,18 +369,19 @@ impl RelPositionMultiHeadAttention {
 
     /// Load weights from a flattened weight map using the given prefix.
     pub fn load_weights(&mut self, weights: &HashMap<String, Array>, prefix: &str) {
+        use crate::parakeet_mlx::to_weight_dtype;
         // Load base MHA weights
         self.mha.load_weights(weights, prefix);
 
         // Load pos-specific weights
         if let Some(w) = weights.get(&format!("{prefix}.linear_pos.weight")) {
-            self.linear_pos.weight = Param::new(w.clone());
+            self.linear_pos.weight = Param::new(to_weight_dtype(w));
         }
         if let Some(u) = weights.get(&format!("{prefix}.pos_bias_u")) {
-            self.pos_bias_u = u.clone();
+            self.pos_bias_u = to_weight_dtype(u);
         }
         if let Some(v) = weights.get(&format!("{prefix}.pos_bias_v")) {
-            self.pos_bias_v = v.clone();
+            self.pos_bias_v = to_weight_dtype(v);
         }
     }
 }
