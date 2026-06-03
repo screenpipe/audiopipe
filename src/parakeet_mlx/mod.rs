@@ -118,6 +118,36 @@ fn parakeet_mlx_repo() -> String {
     std::env::var(HF_REPO_ENV).unwrap_or_else(|_| HF_REPO.to_string())
 }
 
+/// Bridges hf-hub's [`hf_hub::api::Progress`] trait onto a plain
+/// `FnMut(bytes_received_cumulative, bytes_total)` closure.
+///
+/// hf-hub reports per-chunk byte counts via `update`; this adapter accumulates
+/// them so the closure always sees the cumulative bytes received and the total
+/// file size, which is the shape a UI progress bar wants.
+struct ProgressAdapter<F: FnMut(u64, u64)> {
+    received: u64,
+    total: u64,
+    cb: F,
+}
+
+impl<F: FnMut(u64, u64)> hf_hub::api::Progress for ProgressAdapter<F> {
+    fn init(&mut self, size: usize, _filename: &str) {
+        self.total = size as u64;
+        self.received = 0;
+        (self.cb)(0, self.total);
+    }
+
+    fn update(&mut self, size: usize) {
+        self.received = self.received.saturating_add(size as u64);
+        (self.cb)(self.received, self.total);
+    }
+
+    fn finish(&mut self) {
+        let done = self.total.max(self.received);
+        (self.cb)(done, done);
+    }
+}
+
 // ---------------------------------------------------------------------------
 // ParakeetMlxEngine
 // ---------------------------------------------------------------------------
@@ -186,6 +216,56 @@ impl ParakeetMlxEngine {
 
         tracing::info!("loading model from {:?}", model_dir);
         Self::from_dir(&model_dir, name, ParakeetPrecision::Bf16)
+    }
+
+    /// Download the model weights into the HF cache, reporting byte progress.
+    ///
+    /// `on_progress` is invoked as `(bytes_received_cumulative, bytes_total)`
+    /// while the large `model.safetensors` file downloads, so a consumer can
+    /// render a real progress bar. The small `config.json` / vocab files are
+    /// fetched without progress (they are tiny). This only populates the HF
+    /// cache; the engine is loaded from cache later via
+    /// [`Self::from_pretrained_cache_only`].
+    ///
+    /// Supported names:
+    /// - `"parakeet-tdt-0.6b-v3"` (default MLX community model)
+    pub fn download_with_progress(
+        name: &str,
+        on_progress: impl FnMut(u64, u64),
+    ) -> Result<()> {
+        match name {
+            "parakeet-tdt-0.6b-v3" => {}
+            other => {
+                return Err(Error::ModelNotFound(format!(
+                    "unsupported parakeet-mlx model '{}', available: parakeet-tdt-0.6b-v3",
+                    other
+                )));
+            }
+        }
+        let repo = parakeet_mlx_repo();
+
+        tracing::info!("downloading {} from {} (with progress)", name, repo);
+        let api = hf_hub::api::sync::Api::new().map_err(|e| Error::Download(e.to_string()))?;
+        let model = api.model(repo);
+
+        // Large weight file: report byte progress.
+        let progress = ProgressAdapter {
+            received: 0,
+            total: 0,
+            cb: on_progress,
+        };
+        model
+            .download_with_progress("model.safetensors", progress)
+            .map_err(|e| Error::Download(format!("model.safetensors: {e}")))?;
+
+        // Small metadata files: no progress needed.
+        hf_get_with_retry(&model, "config.json", 3)
+            .map_err(|e| Error::Download(format!("config.json: {e}")))?;
+        hf_get_with_retry(&model, "vocab.txt", 3)
+            .or_else(|_| hf_get_with_retry(&model, "tokenizer.model", 3))
+            .map_err(|e| Error::Download(format!("vocab.txt: {e}")))?;
+
+        Ok(())
     }
 
     /// Same as [`Self::from_pretrained`] but only uses the local HF cache (no download).

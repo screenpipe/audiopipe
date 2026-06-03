@@ -276,6 +276,36 @@ impl Model {
         }
     }
 
+    /// Download a model's weights into the HF cache, reporting byte progress.
+    ///
+    /// `on_progress` is invoked as `(bytes_received_cumulative, bytes_total)`
+    /// during the download so a consumer (e.g. an onboarding wizard) can render
+    /// a real progress bar. This only populates the cache; load the model later
+    /// with [`Self::from_pretrained_cache_only`] or [`Self::from_pretrained`].
+    ///
+    /// Only the parakeet-mlx engine supports progress downloads for now; the
+    /// LLM and Whisper download paths live in the host app.
+    pub fn download_pretrained_with_progress(
+        name: &str,
+        on_progress: impl FnMut(u64, u64),
+    ) -> Result<()> {
+        let _ = &on_progress;
+        match name {
+            #[cfg(feature = "parakeet-mlx")]
+            n if n.contains("mlx") && n.starts_with("parakeet") => {
+                let base_name = n.replace("-mlx", "");
+                crate::parakeet_mlx::ParakeetMlxEngine::download_with_progress(
+                    &base_name,
+                    on_progress,
+                )
+            }
+            _ => Err(Error::ModelNotFound(format!(
+                "model '{}' does not support progress downloads; only parakeet-mlx does for now",
+                name
+            ))),
+        }
+    }
+
     /// Load a model from a local directory containing ONNX files.
     pub fn from_dir(path: &std::path::Path, engine_type: &str) -> Result<Self> {
         match engine_type {
