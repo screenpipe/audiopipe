@@ -47,6 +47,11 @@ path = "examples/bench_batch.rs"
 name = "bench_asr"
 path = "examples/bench_asr.rs"
 
+[[example]]
+name = "convert_to_bf16"
+path = "examples/convert_to_bf16.rs"
+required-features = ["parakeet-mlx"]
+
 [features]
 default = ["ort-defaults"]
 
