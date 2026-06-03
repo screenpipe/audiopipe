@@ -106,6 +106,18 @@ const SUBSAMPLING_FACTOR: usize = 8;
 /// HuggingFace repository for the MLX-converted model.
 const HF_REPO: &str = "mlx-community/parakeet-tdt-0.6b-v3";
 
+/// Environment variable that overrides the Parakeet-MLX HF repo.
+const HF_REPO_ENV: &str = "AUDIOPIPE_PARAKEET_MLX_REPO";
+
+/// Resolve the HF repo to fetch/load Parakeet-MLX from. Defaults to the upstream
+/// MLX community fp32 repo; set `AUDIOPIPE_PARAKEET_MLX_REPO` to point at a
+/// drop-in alternative (e.g. a pre-converted bf16 repo for half the download).
+/// The weights are loaded at whatever precision they are stored in, so a bf16
+/// repo just means the fp32 copy is never fetched or materialized.
+fn parakeet_mlx_repo() -> String {
+    std::env::var(HF_REPO_ENV).unwrap_or_else(|_| HF_REPO.to_string())
+}
+
 // ---------------------------------------------------------------------------
 // ParakeetMlxEngine
 // ---------------------------------------------------------------------------
@@ -142,20 +154,21 @@ impl ParakeetMlxEngine {
     /// Supported names:
     /// - `"parakeet-tdt-0.6b-v3"` (default MLX community model)
     pub fn from_pretrained(name: &str) -> Result<Self> {
-        let repo = match name {
-            "parakeet-tdt-0.6b-v3" => HF_REPO,
+        match name {
+            "parakeet-tdt-0.6b-v3" => {}
             other => {
                 return Err(Error::ModelNotFound(format!(
                     "unsupported parakeet-mlx model '{}', available: parakeet-tdt-0.6b-v3",
                     other
                 )));
             }
-        };
+        }
+        let repo = parakeet_mlx_repo();
 
         tracing::info!("downloading {} from {}", name, repo);
         let api = hf_hub::api::sync::Api::new()
             .map_err(|e| Error::Download(e.to_string()))?;
-        let model = api.model(repo.to_string());
+        let model = api.model(repo);
 
         // Download required files
         let safetensors_path = hf_get_with_retry(&model, "model.safetensors", 3)
@@ -187,23 +200,24 @@ impl ParakeetMlxEngine {
         name: &str,
         precision: ParakeetPrecision,
     ) -> Result<Self> {
-        let repo = match name {
-            "parakeet-tdt-0.6b-v3" => HF_REPO,
+        match name {
+            "parakeet-tdt-0.6b-v3" => {}
             other => {
                 return Err(Error::ModelNotFound(format!(
                     "unsupported parakeet-mlx model '{}', available: parakeet-tdt-0.6b-v3",
                     other
                 )));
             }
-        };
+        }
+        let repo = parakeet_mlx_repo();
 
-        let safetensors_path = hf_cache::cache_get(repo, "model.safetensors")
+        let safetensors_path = hf_cache::cache_get(&repo, "model.safetensors")
             .ok_or_else(|| Error::ModelNotCached(name.to_string()))?;
-        if hf_cache::cache_get(repo, "config.json").is_none() {
+        if hf_cache::cache_get(&repo, "config.json").is_none() {
             return Err(Error::ModelNotCached(name.to_string()));
         }
-        let vocab_ok = hf_cache::cache_get(repo, "vocab.txt").is_some()
-            || hf_cache::cache_get(repo, "tokenizer.model").is_some();
+        let vocab_ok = hf_cache::cache_get(&repo, "vocab.txt").is_some()
+            || hf_cache::cache_get(&repo, "tokenizer.model").is_some();
         if !vocab_ok {
             return Err(Error::ModelNotCached(name.to_string()));
         }
