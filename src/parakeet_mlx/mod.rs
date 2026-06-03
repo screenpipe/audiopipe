@@ -38,7 +38,20 @@ use std::io::BufRead;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
-use mlx_rs::Array;
+use mlx_rs::{Array, Dtype};
+
+/// Convert a stored weight tensor to bf16 to halve resident size. Index/length
+/// tensors are re-cast at their use-site (already done in conformer.rs), so
+/// blanket-bf16 on stored weights is safe.
+pub(crate) fn to_weight_dtype(a: &Array) -> Array {
+    a.as_dtype(Dtype::Bfloat16).unwrap_or_else(|_| a.clone())
+}
+
+/// Up-cast a (possibly bf16) tensor to f32 for diagnostics that read it back
+/// via `as_slice::<f32>()`, which panics on a dtype mismatch.
+fn to_weight_dtype_f32(a: &Array) -> Array {
+    a.as_dtype(Dtype::Float32).unwrap_or_else(|_| a.clone())
+}
 
 use self::audio::{get_logmel, MelConfig};
 use self::decode::greedy_tdt_decode;
@@ -246,17 +259,21 @@ impl ParakeetMlxEngine {
             .load_weights(&weights)
             .map_err(|e| Error::Other(format!("failed to load joint weights: {e}")))?;
 
-        // Verify joint weights loaded correctly
+        // Verify joint weights loaded correctly. Weights are stored in bf16, so
+        // cast to f32 before slicing — `as_slice::<f32>()` panics on a dtype
+        // mismatch.
         {
-            mlx_rs::transforms::eval([joint.enc_proj.weight.as_ref()]).ok();
-            let w: Vec<f32> = joint.enc_proj.weight.as_ref().as_slice().to_vec();
+            let w_arr = to_weight_dtype_f32(joint.enc_proj.weight.as_ref());
+            mlx_rs::transforms::eval([&w_arr]).ok();
+            let w: Vec<f32> = w_arr.as_slice().to_vec();
             tracing::info!("joint.enc_proj weight: shape={:?}, range=[{:.4}, {:.4}]",
                 joint.enc_proj.weight.as_ref().shape(),
                 w.iter().copied().fold(f32::MAX, f32::min),
                 w.iter().copied().fold(f32::MIN, f32::max));
             if let Some(ref b) = *joint.enc_proj.bias {
-                mlx_rs::transforms::eval([b]).ok();
-                let bv: Vec<f32> = b.as_slice().to_vec();
+                let b_arr = to_weight_dtype_f32(b);
+                mlx_rs::transforms::eval([&b_arr]).ok();
+                let bv: Vec<f32> = b_arr.as_slice().to_vec();
                 tracing::info!("joint.enc_proj bias: range=[{:.4}, {:.4}]",
                     bv.iter().copied().fold(f32::MAX, f32::min),
                     bv.iter().copied().fold(f32::MIN, f32::max));

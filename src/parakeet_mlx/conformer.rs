@@ -53,17 +53,18 @@ impl FeedForward {
     }
 
     pub fn load_weights(&mut self, weights: &HashMap<String, Array>, prefix: &str) {
+        use crate::parakeet_mlx::to_weight_dtype;
         if let Some(w) = weights.get(&format!("{prefix}.linear1.weight")) {
-            self.linear1.weight = Param::new(w.clone());
+            self.linear1.weight = Param::new(to_weight_dtype(w));
         }
         if let Some(b) = weights.get(&format!("{prefix}.linear1.bias")) {
-            self.linear1.bias = Param::new(Some(b.clone()));
+            self.linear1.bias = Param::new(Some(to_weight_dtype(b)));
         }
         if let Some(w) = weights.get(&format!("{prefix}.linear2.weight")) {
-            self.linear2.weight = Param::new(w.clone());
+            self.linear2.weight = Param::new(to_weight_dtype(w));
         }
         if let Some(b) = weights.get(&format!("{prefix}.linear2.bias")) {
-            self.linear2.bias = Param::new(Some(b.clone()));
+            self.linear2.bias = Param::new(Some(to_weight_dtype(b)));
         }
     }
 }
@@ -150,37 +151,38 @@ impl Convolution {
     }
 
     pub fn load_weights(&mut self, weights: &HashMap<String, Array>, prefix: &str) {
+        use crate::parakeet_mlx::to_weight_dtype;
         if let Some(w) = weights.get(&format!("{prefix}.pointwise_conv1.weight")) {
-            self.pointwise_conv1.weight = Param::new(w.clone());
+            self.pointwise_conv1.weight = Param::new(to_weight_dtype(w));
         }
         if let Some(b) = weights.get(&format!("{prefix}.pointwise_conv1.bias")) {
-            self.pointwise_conv1.bias = Param::new(Some(b.clone()));
+            self.pointwise_conv1.bias = Param::new(Some(to_weight_dtype(b)));
         }
         if let Some(w) = weights.get(&format!("{prefix}.depthwise_conv.weight")) {
-            self.depthwise_conv.weight = Param::new(w.clone());
+            self.depthwise_conv.weight = Param::new(to_weight_dtype(w));
         }
         if let Some(b) = weights.get(&format!("{prefix}.depthwise_conv.bias")) {
-            self.depthwise_conv.bias = Param::new(Some(b.clone()));
+            self.depthwise_conv.bias = Param::new(Some(to_weight_dtype(b)));
         }
         if let Some(w) = weights.get(&format!("{prefix}.batch_norm.weight")) {
-            self.batch_norm.weight = Param::new(Some(w.clone()));
+            self.batch_norm.weight = Param::new(Some(to_weight_dtype(w)));
         }
         if let Some(b) = weights.get(&format!("{prefix}.batch_norm.bias")) {
-            self.batch_norm.bias = Param::new(Some(b.clone()));
+            self.batch_norm.bias = Param::new(Some(to_weight_dtype(b)));
         }
         if let Some(m) = weights.get(&format!("{prefix}.batch_norm.running_mean")) {
-            self.batch_norm.running_mean = Param::new(Some(m.clone()));
+            self.batch_norm.running_mean = Param::new(Some(to_weight_dtype(m)));
         }
         if let Some(v) = weights.get(&format!("{prefix}.batch_norm.running_var")) {
-            self.batch_norm.running_var = Param::new(Some(v.clone()));
+            self.batch_norm.running_var = Param::new(Some(to_weight_dtype(v)));
         }
         // Set eval mode so BatchNorm uses running_mean/running_var instead of batch stats
         self.batch_norm.training_mode(false);
         if let Some(w) = weights.get(&format!("{prefix}.pointwise_conv2.weight")) {
-            self.pointwise_conv2.weight = Param::new(w.clone());
+            self.pointwise_conv2.weight = Param::new(to_weight_dtype(w));
         }
         if let Some(b) = weights.get(&format!("{prefix}.pointwise_conv2.bias")) {
-            self.pointwise_conv2.bias = Param::new(Some(b.clone()));
+            self.pointwise_conv2.bias = Param::new(Some(to_weight_dtype(b)));
         }
     }
 }
@@ -484,19 +486,20 @@ impl DwStridingSubsampling {
     }
 
     pub fn load_weights(&mut self, weights: &HashMap<String, Array>, prefix: &str) {
+        use crate::parakeet_mlx::to_weight_dtype;
         for (idx, conv) in self.conv_layers.iter_mut() {
             if let Some(w) = weights.get(&format!("{prefix}.conv.{idx}.weight")) {
-                conv.weight = Param::new(w.clone());
+                conv.weight = Param::new(to_weight_dtype(w));
             }
             if let Some(b) = weights.get(&format!("{prefix}.conv.{idx}.bias")) {
-                conv.bias = Param::new(Some(b.clone()));
+                conv.bias = Param::new(Some(to_weight_dtype(b)));
             }
         }
         if let Some(w) = weights.get(&format!("{prefix}.out.weight")) {
-            self.out.weight = Param::new(w.clone());
+            self.out.weight = Param::new(to_weight_dtype(w));
         }
         if let Some(b) = weights.get(&format!("{prefix}.out.bias")) {
-            self.out.bias = Param::new(Some(b.clone()));
+            self.out.bias = Param::new(Some(to_weight_dtype(b)));
         }
     }
 }
@@ -675,10 +678,11 @@ impl Conformer {
 
 /// Load LayerNorm weight and bias from the weight map.
 fn load_layer_norm(ln: &mut LayerNorm, weights: &HashMap<String, Array>, prefix: &str) {
+    use crate::parakeet_mlx::to_weight_dtype;
     if let Some(w) = weights.get(&format!("{prefix}.weight")) {
-        ln.weight = Param::new(Some(w.clone()));
+        ln.weight = Param::new(Some(to_weight_dtype(w)));
     }
     if let Some(b) = weights.get(&format!("{prefix}.bias")) {
-        ln.bias = Param::new(Some(b.clone()));
+        ln.bias = Param::new(Some(to_weight_dtype(b)));
     }
 }
