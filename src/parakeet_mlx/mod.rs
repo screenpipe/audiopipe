@@ -22,6 +22,15 @@ extern "C" {
     fn mlx_default_gpu_stream_new() -> MlxStream;
     fn mlx_synchronize(stream: MlxStream) -> std::ffi::c_int;
     fn mlx_stream_free(stream: MlxStream) -> std::ffi::c_int;
+    // Metal allocator/cache management. MLX keeps freed device buffers in a
+    // reuse cache that, left unbounded, climbs to many GB of IOAccelerator
+    // memory during streaming (every `push` re-decodes the whole audio buffer,
+    // so each call allocates a fresh, ever-larger working set). `set_cache_limit`
+    // caps the reuse cache; `clear_cache` returns it to the OS.
+    fn mlx_clear_cache() -> std::ffi::c_int;
+    fn mlx_set_cache_limit(res: *mut usize, limit: usize) -> std::ffi::c_int;
+    fn mlx_get_active_memory(res: *mut usize) -> std::ffi::c_int;
+    fn mlx_get_cache_memory(res: *mut usize) -> std::ffi::c_int;
 }
 
 use std::collections::HashMap;
@@ -177,6 +186,7 @@ impl ParakeetMlxEngine {
     /// - `model.safetensors`
     /// - `vocab.txt` (one token per line)
     pub fn from_dir(dir: &Path, name: &str) -> Result<Self> {
+        init_mlx_cache_limit();
         // --- Load vocabulary from config.json → joint.vocabulary ---
         let config_path = dir.join("config.json");
         let vocab = if config_path.exists() {
@@ -323,6 +333,7 @@ impl Engine for ParakeetMlxEngine {
         )?;
 
         gpu_synchronize();
+        gpu_clear_cache();
 
         Ok(result)
     }
@@ -409,6 +420,60 @@ fn gpu_synchronize() {
         mlx_synchronize(stream);
         mlx_stream_free(stream);
     }
+}
+
+/// Default ceiling for MLX's Metal buffer-reuse cache, in bytes (512 MiB).
+/// Active (in-flight) allocations are not capped by this; only the pool of
+/// freed-but-retained buffers is, which is what otherwise grows unbounded.
+const MLX_CACHE_LIMIT_BYTES: usize = 512 * 1024 * 1024;
+
+/// Install a process-wide cap on MLX's Metal buffer-reuse cache. Idempotent —
+/// runs once even though engine construction may happen per model load.
+/// Override the ceiling with `AUDIOPIPE_MLX_CACHE_LIMIT_MB`, or disable it
+/// entirely with `AUDIOPIPE_MLX_CACHE_LIMIT_MB=0`.
+fn init_mlx_cache_limit() {
+    static ONCE: std::sync::Once = std::sync::Once::new();
+    ONCE.call_once(|| {
+        let limit = std::env::var("AUDIOPIPE_MLX_CACHE_LIMIT_MB")
+            .ok()
+            .and_then(|s| s.trim().parse::<usize>().ok())
+            .map_or(MLX_CACHE_LIMIT_BYTES, |mb| mb * 1024 * 1024);
+        if limit == 0 {
+            return;
+        }
+        let mut prev = 0usize;
+        unsafe {
+            mlx_set_cache_limit(&mut prev, limit);
+        }
+        tracing::debug!(limit_bytes = limit, "parakeet-mlx: MLX cache limit set");
+    });
+}
+
+/// Return MLX's Metal buffer cache (freed-but-retained) to the OS. Cheap; the
+/// next allocation simply re-acquires from Metal. Streaming re-decodes the
+/// whole buffer every push, so without this the cache accumulates the peak
+/// working set across the entire session. Opt out with
+/// `AUDIOPIPE_NO_MLX_CACHE_CLEAR` if it ever regresses throughput.
+fn gpu_clear_cache() {
+    if std::env::var_os("AUDIOPIPE_NO_MLX_CACHE_CLEAR").is_some() {
+        return;
+    }
+    unsafe {
+        mlx_clear_cache();
+    }
+}
+
+/// MLX memory counters `(active_bytes, cache_bytes)`. Diagnostics for tests
+/// and the `mlx_stream_leak_probe` example.
+#[must_use]
+pub fn mlx_memory_stats() -> (usize, usize) {
+    let mut active = 0usize;
+    let mut cache = 0usize;
+    unsafe {
+        mlx_get_active_memory(&mut active);
+        mlx_get_cache_memory(&mut cache);
+    }
+    (active, cache)
 }
 
 // ---------------------------------------------------------------------------
@@ -676,6 +741,7 @@ impl StreamSession for ParakeetMlxStreamSession {
             segments: std::mem::take(&mut self.last_segments),
         };
         gpu_synchronize();
+        gpu_clear_cache();
         self.finished = true;
         Ok(result)
     }
