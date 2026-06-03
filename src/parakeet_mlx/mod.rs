@@ -40,11 +40,21 @@ use std::sync::{Arc, Mutex};
 
 use mlx_rs::{Array, Dtype};
 
-/// Convert a stored weight tensor to bf16 to halve resident size. Index/length
-/// tensors are re-cast at their use-site (already done in conformer.rs), so
-/// blanket-bf16 on stored weights is safe.
+/// Convert a stored weight tensor to bf16 to halve resident size, and
+/// materialize it eagerly. Index/length tensors are re-cast at their use-site
+/// (already done in conformer.rs), so blanket-bf16 on stored weights is safe.
+///
+/// The eager `eval` is what actually frees memory at load time. Without it the
+/// bf16 result is a lazy cast node that keeps a reference to its fp32 input, so
+/// the full fp32 copy of the weights (~2.4 GB for parakeet-tdt-0.6b) stays
+/// resident from load until the first inference finally walks the graph. A
+/// just-loaded, idle model would then sit at the fp32 footprint, not bf16.
+/// Forcing the cast here lets the fp32 source drop with the safetensors map at
+/// the end of loading, so an idle model settles at ~1.2 GB right away.
 pub(crate) fn to_weight_dtype(a: &Array) -> Array {
-    a.as_dtype(Dtype::Bfloat16).unwrap_or_else(|_| a.clone())
+    let b = a.as_dtype(Dtype::Bfloat16).unwrap_or_else(|_| a.clone());
+    mlx_rs::transforms::eval([&b]).ok();
+    b
 }
 
 /// Up-cast a (possibly bf16) tensor to f32 for diagnostics that read it back
