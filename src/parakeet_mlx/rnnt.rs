@@ -153,10 +153,11 @@ impl PredictNetwork {
     ///   - `decoder.prediction.dec_rnn.lstm.{i}.Wh`
     ///   - `decoder.prediction.dec_rnn.lstm.{i}.bias`
     pub fn load_weights(&mut self, weights: &HashMap<String, Array>) -> Result<(), Exception> {
+        use crate::parakeet_mlx::to_weight_dtype;
         // Embedding
         let embed_key = "decoder.prediction.embed.weight";
         if let Some(w) = weights.get(embed_key) {
-            *self.embed.weight = w.clone();
+            *self.embed.weight = to_weight_dtype(w);
         } else {
             return Err(missing_weight(embed_key));
         }
@@ -169,19 +170,19 @@ impl PredictNetwork {
             let bias_key = format!("decoder.prediction.dec_rnn.lstm.{}.bias", i);
 
             if let Some(wx) = weights.get(&wx_key) {
-                *self.lstm_layers[i].wx = wx.clone();
+                *self.lstm_layers[i].wx = to_weight_dtype(wx);
             } else {
                 return Err(missing_weight(&wx_key));
             }
 
             if let Some(wh) = weights.get(&wh_key) {
-                *self.lstm_layers[i].wh = wh.clone();
+                *self.lstm_layers[i].wh = to_weight_dtype(wh);
             } else {
                 return Err(missing_weight(&wh_key));
             }
 
             if let Some(bias) = weights.get(&bias_key) {
-                *self.lstm_layers[i].bias = Some(bias.clone());
+                *self.lstm_layers[i].bias = Some(to_weight_dtype(bias));
             } else {
                 return Err(missing_weight(&bias_key));
             }
@@ -314,17 +315,18 @@ fn load_linear_weights(
     weights: &HashMap<String, Array>,
     prefix: &str,
 ) -> Result<(), Exception> {
+    use crate::parakeet_mlx::to_weight_dtype;
     let w_key = format!("{}.weight", prefix);
     let b_key = format!("{}.bias", prefix);
 
     if let Some(w) = weights.get(&w_key) {
-        *linear.weight = w.clone();
+        *linear.weight = to_weight_dtype(w);
     } else {
         return Err(missing_weight(&w_key));
     }
 
     if let Some(b) = weights.get(&b_key) {
-        *linear.bias = Some(b.clone());
+        *linear.bias = Some(to_weight_dtype(b));
     } else {
         return Err(missing_weight(&b_key));
     }

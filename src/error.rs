@@ -24,6 +24,9 @@ pub enum Error {
     #[error("decode error: {0}")]
     Decode(String),
 
+    #[error("operation not supported by this engine")]
+    NotSupported,
+
     #[error("{0}")]
     Other(String),
 }
@@ -34,5 +37,16 @@ impl Error {
     /// True when [`Error::ModelNotCached`] — caller may spawn [`crate::Model::spawn_pretrained_download`].
     pub fn is_model_not_cached(&self) -> bool {
         matches!(self, Error::ModelNotCached(_))
+    }
+}
+
+// ort 2.0.0-rc.12 made `ort::Error` generic on a recovery payload (e.g.
+// `Error<SessionBuilder>`), with a stripping `From<Error<R>> for Error<()>`.
+// Bridge the builder-flavoured error so `?` keeps working at construction
+// sites without manual `.map_err` on every chained call.
+#[cfg(feature = "onnx-deps")]
+impl From<ort::Error<ort::session::builder::SessionBuilder>> for Error {
+    fn from(err: ort::Error<ort::session::builder::SessionBuilder>) -> Self {
+        Error::Ort(err.into())
     }
 }

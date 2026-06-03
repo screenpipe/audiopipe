@@ -53,17 +53,18 @@ impl FeedForward {
     }
 
     pub fn load_weights(&mut self, weights: &HashMap<String, Array>, prefix: &str) {
+        use crate::parakeet_mlx::to_weight_dtype;
         if let Some(w) = weights.get(&format!("{prefix}.linear1.weight")) {
-            self.linear1.weight = Param::new(w.clone());
+            self.linear1.weight = Param::new(to_weight_dtype(w));
         }
         if let Some(b) = weights.get(&format!("{prefix}.linear1.bias")) {
-            self.linear1.bias = Param::new(Some(b.clone()));
+            self.linear1.bias = Param::new(Some(to_weight_dtype(b)));
         }
         if let Some(w) = weights.get(&format!("{prefix}.linear2.weight")) {
-            self.linear2.weight = Param::new(w.clone());
+            self.linear2.weight = Param::new(to_weight_dtype(w));
         }
         if let Some(b) = weights.get(&format!("{prefix}.linear2.bias")) {
-            self.linear2.bias = Param::new(Some(b.clone()));
+            self.linear2.bias = Param::new(Some(to_weight_dtype(b)));
         }
     }
 }
@@ -150,37 +151,38 @@ impl Convolution {
     }
 
     pub fn load_weights(&mut self, weights: &HashMap<String, Array>, prefix: &str) {
+        use crate::parakeet_mlx::to_weight_dtype;
         if let Some(w) = weights.get(&format!("{prefix}.pointwise_conv1.weight")) {
-            self.pointwise_conv1.weight = Param::new(w.clone());
+            self.pointwise_conv1.weight = Param::new(to_weight_dtype(w));
         }
         if let Some(b) = weights.get(&format!("{prefix}.pointwise_conv1.bias")) {
-            self.pointwise_conv1.bias = Param::new(Some(b.clone()));
+            self.pointwise_conv1.bias = Param::new(Some(to_weight_dtype(b)));
         }
         if let Some(w) = weights.get(&format!("{prefix}.depthwise_conv.weight")) {
-            self.depthwise_conv.weight = Param::new(w.clone());
+            self.depthwise_conv.weight = Param::new(to_weight_dtype(w));
         }
         if let Some(b) = weights.get(&format!("{prefix}.depthwise_conv.bias")) {
-            self.depthwise_conv.bias = Param::new(Some(b.clone()));
+            self.depthwise_conv.bias = Param::new(Some(to_weight_dtype(b)));
         }
         if let Some(w) = weights.get(&format!("{prefix}.batch_norm.weight")) {
-            self.batch_norm.weight = Param::new(Some(w.clone()));
+            self.batch_norm.weight = Param::new(Some(to_weight_dtype(w)));
         }
         if let Some(b) = weights.get(&format!("{prefix}.batch_norm.bias")) {
-            self.batch_norm.bias = Param::new(Some(b.clone()));
+            self.batch_norm.bias = Param::new(Some(to_weight_dtype(b)));
         }
         if let Some(m) = weights.get(&format!("{prefix}.batch_norm.running_mean")) {
-            self.batch_norm.running_mean = Param::new(Some(m.clone()));
+            self.batch_norm.running_mean = Param::new(Some(to_weight_dtype(m)));
         }
         if let Some(v) = weights.get(&format!("{prefix}.batch_norm.running_var")) {
-            self.batch_norm.running_var = Param::new(Some(v.clone()));
+            self.batch_norm.running_var = Param::new(Some(to_weight_dtype(v)));
         }
         // Set eval mode so BatchNorm uses running_mean/running_var instead of batch stats
         self.batch_norm.training_mode(false);
         if let Some(w) = weights.get(&format!("{prefix}.pointwise_conv2.weight")) {
-            self.pointwise_conv2.weight = Param::new(w.clone());
+            self.pointwise_conv2.weight = Param::new(to_weight_dtype(w));
         }
         if let Some(b) = weights.get(&format!("{prefix}.pointwise_conv2.bias")) {
-            self.pointwise_conv2.bias = Param::new(Some(b.clone()));
+            self.pointwise_conv2.bias = Param::new(Some(to_weight_dtype(b)));
         }
     }
 }
@@ -248,7 +250,7 @@ impl ConformerBlock {
             let f0 = ff1_out.index((0, 0, ..)).flatten(None, None).ok();
             if let Some(f0) = f0 {
                 mlx_rs::transforms::eval([&f0]).ok();
-                let fv: Vec<f32> = f0.as_slice().to_vec();
+                let fv: Vec<f32> = crate::parakeet_mlx::to_weight_dtype_f32(&f0).as_slice().to_vec();
                 tracing::trace!("ff1_out[0,0,:5] = [{:.4}, {:.4}, {:.4}, {:.4}, {:.4}]", fv[0], fv[1], fv[2], fv[3], fv[4]);
             }
         }
@@ -423,7 +425,7 @@ impl DwStridingSubsampling {
             x = conv.forward(&x)?;
             {
                 mlx_rs::transforms::eval([&x]).ok();
-                let cv: Vec<f32> = x.as_slice().to_vec();
+                let cv: Vec<f32> = crate::parakeet_mlx::to_weight_dtype_f32(&x).as_slice().to_vec();
                 tracing::info!("conv[{}] (vec[{}]) out: shape={:?}, range=[{:.4}, {:.4}]",
                     idx, i, x.shape(),
                     cv.iter().copied().fold(f32::MAX, f32::min),
@@ -448,7 +450,7 @@ impl DwStridingSubsampling {
             let frame0 = x.index((0, 0, .., ..)).flatten(None, None).ok();
             if let Some(f0) = frame0 {
                 mlx_rs::transforms::eval([&f0]).ok();
-                let fv: Vec<f32> = f0.as_slice().to_vec();
+                let fv: Vec<f32> = crate::parakeet_mlx::to_weight_dtype_f32(&f0).as_slice().to_vec();
                 tracing::info!("pre-flatten[0,0,:10] = [{:.4}, {:.4}, {:.4}, {:.4}, {:.4}, {:.4}, {:.4}, {:.4}, {:.4}, {:.4}]",
                     fv[0], fv[1], fv[2], fv[3], fv[4], fv[5], fv[6], fv[7], fv[8], fv[9]);
             }
@@ -462,7 +464,7 @@ impl DwStridingSubsampling {
             let frame0 = x.index((0, 0, ..)).flatten(None, None).ok();
             if let Some(f0) = frame0 {
                 mlx_rs::transforms::eval([&f0]).ok();
-                let fv: Vec<f32> = f0.as_slice().to_vec();
+                let fv: Vec<f32> = crate::parakeet_mlx::to_weight_dtype_f32(&f0).as_slice().to_vec();
                 tracing::info!("flattened[0,0,:10] = [{:.4}, {:.4}, {:.4}, {:.4}, {:.4}, {:.4}, {:.4}, {:.4}, {:.4}, {:.4}]",
                     fv[0], fv[1], fv[2], fv[3], fv[4], fv[5], fv[6], fv[7], fv[8], fv[9]);
             }
@@ -484,19 +486,20 @@ impl DwStridingSubsampling {
     }
 
     pub fn load_weights(&mut self, weights: &HashMap<String, Array>, prefix: &str) {
+        use crate::parakeet_mlx::to_weight_dtype;
         for (idx, conv) in self.conv_layers.iter_mut() {
             if let Some(w) = weights.get(&format!("{prefix}.conv.{idx}.weight")) {
-                conv.weight = Param::new(w.clone());
+                conv.weight = Param::new(to_weight_dtype(w));
             }
             if let Some(b) = weights.get(&format!("{prefix}.conv.{idx}.bias")) {
-                conv.bias = Param::new(Some(b.clone()));
+                conv.bias = Param::new(Some(to_weight_dtype(b)));
             }
         }
         if let Some(w) = weights.get(&format!("{prefix}.out.weight")) {
-            self.out.weight = Param::new(w.clone());
+            self.out.weight = Param::new(to_weight_dtype(w));
         }
         if let Some(b) = weights.get(&format!("{prefix}.out.bias")) {
-            self.out.bias = Param::new(Some(b.clone()));
+            self.out.bias = Param::new(Some(to_weight_dtype(b)));
         }
     }
 }
@@ -615,7 +618,7 @@ impl Conformer {
         let x = self.pre_encode.forward(x)?;
         let out_lengths = self.pre_encode.compute_lengths(&lengths)?;
         mlx_rs::transforms::eval([&x]).ok();
-        let sv: Vec<f32> = x.as_slice().to_vec();
+        let sv: Vec<f32> = crate::parakeet_mlx::to_weight_dtype_f32(&x).as_slice().to_vec();
         tracing::info!("pre_encode[0,0,:10] = {:?}", &sv[..10.min(sv.len())]);
         tracing::info!("pre_encode range: [{:.4}, {:.4}]",
             sv.iter().copied().fold(f32::MAX, f32::min),
@@ -625,7 +628,7 @@ impl Conformer {
         tracing::info!("pos_enc scale={}", self.pos_enc.scale);
         let (x, pos_emb) = self.pos_enc.forward(&x, 0)?;
         mlx_rs::transforms::eval([&x]).ok();
-        let pv: Vec<f32> = x.as_slice().to_vec();
+        let pv: Vec<f32> = crate::parakeet_mlx::to_weight_dtype_f32(&x).as_slice().to_vec();
         tracing::info!("after pos_enc[0,0,:5] = {:?}", &pv[..5.min(pv.len())]);
 
         // Run through all conformer blocks
@@ -634,7 +637,7 @@ impl Conformer {
             x = layer.forward(&x, Some(&pos_emb))?;
             if i == 0 {
                 mlx_rs::transforms::eval([&x]).ok();
-                let lv: Vec<f32> = x.as_slice().to_vec();
+                let lv: Vec<f32> = crate::parakeet_mlx::to_weight_dtype_f32(&x).as_slice().to_vec();
                 tracing::info!("after layer0[0,0,:10] = {:?}", &lv[..10.min(lv.len())]);
                 tracing::info!("after layer0 range: [{:.4}, {:.4}]",
                     lv.iter().copied().fold(f32::MAX, f32::min),
@@ -675,10 +678,11 @@ impl Conformer {
 
 /// Load LayerNorm weight and bias from the weight map.
 fn load_layer_norm(ln: &mut LayerNorm, weights: &HashMap<String, Array>, prefix: &str) {
+    use crate::parakeet_mlx::to_weight_dtype;
     if let Some(w) = weights.get(&format!("{prefix}.weight")) {
-        ln.weight = Param::new(Some(w.clone()));
+        ln.weight = Param::new(Some(to_weight_dtype(w)));
     }
     if let Some(b) = weights.get(&format!("{prefix}.bias")) {
-        ln.bias = Param::new(Some(b.clone()));
+        ln.bias = Param::new(Some(to_weight_dtype(b)));
     }
 }
