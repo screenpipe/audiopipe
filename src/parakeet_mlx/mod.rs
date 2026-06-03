@@ -550,29 +550,27 @@ fn load_safetensors(path: &Path) -> Result<HashMap<String, Array>> {
                 Array::from_slice(floats, &shape)
             }
             safetensors::Dtype::F16 => {
-                // Convert f16 bytes to f32, then create Array and cast
+                // mlx-rs 0.25 implements `ArrayElement`/`FromSliceElement` for
+                // `half::f16`, so build the Array natively as f16 — no f32
+                // intermediate is ever materialized.
                 let bytes = view.data();
-                let f32_vals: Vec<f32> = bytes
+                let f16_vals: Vec<half::f16> = bytes
                     .chunks_exact(2)
-                    .map(|chunk| {
-                        let bits = u16::from_le_bytes([chunk[0], chunk[1]]);
-                        half::f16::from_bits(bits).to_f32()
-                    })
+                    .map(|chunk| half::f16::from_bits(u16::from_le_bytes([chunk[0], chunk[1]])))
                     .collect();
-                let arr = Array::from_slice(&f32_vals, &shape);
-                // Keep as f32 — mlx will handle dtype matching internally
-                arr
+                Array::from_slice(&f16_vals, &shape)
             }
             safetensors::Dtype::BF16 => {
+                // mlx-rs 0.25 implements `ArrayElement`/`FromSliceElement` for
+                // `half::bf16`, so build the Array natively as bf16. Loading a
+                // pre-converted bf16 model therefore never materializes an f32
+                // copy of the weights.
                 let bytes = view.data();
-                let f32_vals: Vec<f32> = bytes
+                let bf16_vals: Vec<half::bf16> = bytes
                     .chunks_exact(2)
-                    .map(|chunk| {
-                        let bits = u16::from_le_bytes([chunk[0], chunk[1]]);
-                        half::bf16::from_bits(bits).to_f32()
-                    })
+                    .map(|chunk| half::bf16::from_bits(u16::from_le_bytes([chunk[0], chunk[1]])))
                     .collect();
-                Array::from_slice(&f32_vals, &shape)
+                Array::from_slice(&bf16_vals, &shape)
             }
             other => {
                 tracing::warn!("skipping tensor '{}' with unsupported dtype {:?}", name, other);
