@@ -40,6 +40,7 @@ pub mod parakeet_mlx;
 
 pub use error::Error;
 pub use model::{
-    Model, PartialTranscript, Segment, StreamSession, TranscribeOptions, TranscribeResult,
+    Model, ParakeetPrecision, PartialTranscript, Segment, StreamSession, TranscribeOptions,
+    TranscribeResult,
 };
 

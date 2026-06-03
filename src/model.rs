@@ -17,6 +17,15 @@ use std::sync::Mutex;
 /// ONNX (CoreML/DirectML/CPU) and cloud API engines are NOT affected.
 static GPU_LOCK: Mutex<()> = Mutex::new(());
 
+/// Weight precision for the Parakeet MLX engine. `Int8` is reserved; it
+/// currently falls back to `Bf16` with a warning (no QuantizedLinear yet).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum ParakeetPrecision {
+    #[default]
+    Bf16,
+    Int8,
+}
+
 /// A loaded STT model ready for inference.
 pub struct Model {
     inner: Box<dyn Engine + Send>,
@@ -169,12 +178,28 @@ impl Model {
     /// Returns [`Error::ModelNotCached`] if a download is still needed — use [`Self::spawn_pretrained_download`]
     /// then retry later with this method or [`Self::from_pretrained`].
     pub fn from_pretrained_cache_only(name: &str) -> Result<Self> {
+        Self::from_pretrained_cache_only_with_precision(name, ParakeetPrecision::default())
+    }
+
+    /// Like [`Self::from_pretrained_cache_only`] but lets the caller request a
+    /// weight precision for the Parakeet MLX engine. All other engines ignore
+    /// `precision`. `ParakeetPrecision::Int8` is reserved and currently falls
+    /// back to `Bf16` with a warning.
+    pub fn from_pretrained_cache_only_with_precision(
+        name: &str,
+        precision: ParakeetPrecision,
+    ) -> Result<Self> {
+        // Only the parakeet-mlx arm consumes `precision`; bind it here so the
+        // variable is considered used in builds without that feature.
+        let _ = precision;
         match name {
             #[cfg(feature = "parakeet-mlx")]
             n if n.contains("mlx") && n.starts_with("parakeet") => {
                 let base_name = n.replace("-mlx", "");
                 let engine =
-                    crate::parakeet_mlx::ParakeetMlxEngine::from_pretrained_cache_only(&base_name)?;
+                    crate::parakeet_mlx::ParakeetMlxEngine::from_pretrained_cache_only_with_precision(
+                        &base_name, precision,
+                    )?;
                 Ok(Self { inner: Box::new(engine), uses_gpu: true })
             }
             #[cfg(feature = "parakeet")]

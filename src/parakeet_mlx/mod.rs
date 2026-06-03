@@ -59,7 +59,8 @@ use self::rnnt::{JointNetwork, PredictNetwork};
 use crate::error::{Error, Result};
 use crate::hf_cache;
 use crate::model::{
-    Engine, PartialTranscript, Segment, StreamSession, TranscribeOptions, TranscribeResult,
+    Engine, ParakeetPrecision, PartialTranscript, Segment, StreamSession, TranscribeOptions,
+    TranscribeResult,
 };
 
 // ---------------------------------------------------------------------------
@@ -161,11 +162,21 @@ impl ParakeetMlxEngine {
             .to_path_buf();
 
         tracing::info!("loading model from {:?}", model_dir);
-        Self::from_dir(&model_dir, name)
+        Self::from_dir(&model_dir, name, ParakeetPrecision::Bf16)
     }
 
     /// Same as [`Self::from_pretrained`] but only uses the local HF cache (no download).
     pub fn from_pretrained_cache_only(name: &str) -> Result<Self> {
+        Self::from_pretrained_cache_only_with_precision(name, ParakeetPrecision::Bf16)
+    }
+
+    /// Like [`Self::from_pretrained_cache_only`] but loads weights at the
+    /// requested precision. `ParakeetPrecision::Int8` is reserved and falls
+    /// back to `Bf16` with a warning (no QuantizedLinear path yet).
+    pub fn from_pretrained_cache_only_with_precision(
+        name: &str,
+        precision: ParakeetPrecision,
+    ) -> Result<Self> {
         let repo = match name {
             "parakeet-tdt-0.6b-v3" => HF_REPO,
             other => {
@@ -192,13 +203,19 @@ impl ParakeetMlxEngine {
             .unwrap_or(Path::new("."))
             .to_path_buf();
 
-        Self::from_dir(&model_dir, name)
+        Self::from_dir(&model_dir, name, precision)
     }
 
     /// Load the engine from a local directory containing:
     /// - `model.safetensors`
     /// - `vocab.txt` (one token per line)
-    pub fn from_dir(dir: &Path, name: &str) -> Result<Self> {
+    pub fn from_dir(dir: &Path, name: &str, precision: ParakeetPrecision) -> Result<Self> {
+        if matches!(precision, ParakeetPrecision::Int8) {
+            tracing::warn!("parakeet-mlx int8 not implemented yet; loading bf16");
+        }
+        // Weights already load bf16 by default; no separate int8 path yet.
+        let _ = precision;
+
         init_mlx_cache_limit();
         // --- Load vocabulary from config.json → joint.vocabulary ---
         let config_path = dir.join("config.json");
