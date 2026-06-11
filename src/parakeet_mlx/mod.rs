@@ -98,12 +98,14 @@ impl ParakeetMlxEngine {
     ///
     /// Supported names:
     /// - `"parakeet-tdt-0.6b-v3"` (default MLX community model)
+    /// - `"parakeet-tdt-0.6b-v2"` (English-only MLX model)
     pub fn from_pretrained(name: &str) -> Result<Self> {
         let repo = match name {
             "parakeet-tdt-0.6b-v3" => HF_REPO,
+            "parakeet-tdt-0.6b-v2" => "mlx-community/parakeet-tdt-0.6b-v2",
             other => {
                 return Err(Error::ModelNotFound(format!(
-                    "unsupported parakeet-mlx model '{}', available: parakeet-tdt-0.6b-v3",
+                    "unsupported parakeet-mlx model '{}', available: parakeet-tdt-0.6b-v2, parakeet-tdt-0.6b-v3",
                     other
                 )));
             }
@@ -136,9 +138,10 @@ impl ParakeetMlxEngine {
     pub fn from_pretrained_cache_only(name: &str) -> Result<Self> {
         let repo = match name {
             "parakeet-tdt-0.6b-v3" => HF_REPO,
+            "parakeet-tdt-0.6b-v2" => "mlx-community/parakeet-tdt-0.6b-v2",
             other => {
                 return Err(Error::ModelNotFound(format!(
-                    "unsupported parakeet-mlx model '{}', available: parakeet-tdt-0.6b-v3",
+                    "unsupported parakeet-mlx model '{}', available: parakeet-tdt-0.6b-v2, parakeet-tdt-0.6b-v3",
                     other
                 )));
             }
