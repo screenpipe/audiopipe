@@ -37,18 +37,18 @@ fn build_session(onnx_path: &Path, cache_dir: Option<&Path>) -> Result<ort::sess
     {
         // Try MLProgram first (more ops on ANE), fall back to NeuralNetwork
         for format in &[
-            ort::execution_providers::coreml::CoreMLModelFormat::MLProgram,
-            ort::execution_providers::coreml::CoreMLModelFormat::NeuralNetwork,
+            ort::ep::coreml::ModelFormat::MLProgram,
+            ort::ep::coreml::ModelFormat::NeuralNetwork,
         ] {
             let format_name = match format {
-                ort::execution_providers::coreml::CoreMLModelFormat::MLProgram => "MLProgram",
-                ort::execution_providers::coreml::CoreMLModelFormat::NeuralNetwork => "NeuralNetwork",
+                ort::ep::coreml::ModelFormat::MLProgram => "MLProgram",
+                ort::ep::coreml::ModelFormat::NeuralNetwork => "NeuralNetwork",
             };
 
-            let mut ep = ort::execution_providers::CoreMLExecutionProvider::default()
+            let mut ep = ort::ep::CoreML::default()
                 .with_model_format(*format)
-                .with_compute_units(ort::execution_providers::coreml::CoreMLComputeUnits::All)
-                .with_specialization_strategy(ort::execution_providers::coreml::CoreMLSpecializationStrategy::FastPrediction)
+                .with_compute_units(ort::ep::coreml::ComputeUnits::All)
+                .with_specialization_strategy(ort::ep::coreml::SpecializationStrategy::FastPrediction)
                 .with_low_precision_accumulation_on_gpu(true);
 
         if let Some(dir) = cache_dir {
@@ -66,7 +66,7 @@ fn build_session(onnx_path: &Path, cache_dir: Option<&Path>) -> Result<ort::sess
         match ort::session::Session::builder()
             .map_err(ort_err)
             .and_then(|b| b.with_execution_providers([ep.build()]).map_err(ort_err))
-            .and_then(|b| b.commit_from_file(onnx_path).map_err(ort_err))
+            .and_then(|mut b| b.commit_from_file(onnx_path).map_err(ort_err))
         {
             Ok(session) => {
                     tracing::info!("qwen3-asr: {} loaded with CoreML {} format", file_name, format_name);
@@ -87,13 +87,13 @@ fn build_session(onnx_path: &Path, cache_dir: Option<&Path>) -> Result<ort::sess
     // --- DirectML (Windows) ---
     #[cfg(feature = "directml")]
     {
-        let ep = ort::execution_providers::DirectMLExecutionProvider::default();
+        let ep = ort::ep::DirectML::default();
         tracing::info!("qwen3-asr: configuring DirectML EP for {}", file_name);
 
         match ort::session::Session::builder()
             .map_err(ort_err)
             .and_then(|b| b.with_execution_providers([ep.build()]).map_err(ort_err))
-            .and_then(|b| b.commit_from_file(onnx_path).map_err(ort_err))
+            .and_then(|mut b| b.commit_from_file(onnx_path).map_err(ort_err))
         {
             Ok(session) => return Ok(session),
             Err(e) => {
@@ -103,8 +103,8 @@ fn build_session(onnx_path: &Path, cache_dir: Option<&Path>) -> Result<ort::sess
     }
 
     // CPU fallback
-    ort::session::Session::builder().map_err(ort_err)?
-        .commit_from_file(onnx_path).map_err(ort_err)
+    let mut b = ort::session::Session::builder().map_err(ort_err)?;
+    b.commit_from_file(onnx_path).map_err(ort_err)
 }
 
 /// Build an ONNX Runtime session for Qwen3-ASR model components.
@@ -118,12 +118,12 @@ fn build_session_gpu(onnx_path: &Path) -> Result<ort::session::Session> {
 
     #[cfg(feature = "directml")]
     {
-        let ep = ort::execution_providers::DirectMLExecutionProvider::default();
+        let ep = ort::ep::DirectML::default();
         tracing::info!("qwen3-asr: trying DirectML EP for {}", file_name);
         match ort::session::Session::builder()
             .map_err(ort_err)
             .and_then(|b| b.with_execution_providers([ep.build()]).map_err(ort_err))
-            .and_then(|b| b.commit_from_file(onnx_path).map_err(ort_err))
+            .and_then(|mut b| b.commit_from_file(onnx_path).map_err(ort_err))
         {
             Ok(session) => {
                 tracing::info!("qwen3-asr: {} loaded with DirectML", file_name);
@@ -137,8 +137,8 @@ fn build_session_gpu(onnx_path: &Path) -> Result<ort::session::Session> {
 
     // CPU fallback (also the primary path on macOS where AMX accelerates via Accelerate.framework)
     tracing::info!("qwen3-asr: loading {} on CPU", file_name);
-    ort::session::Session::builder().map_err(ort_err)?
-        .commit_from_file(onnx_path).map_err(ort_err)
+    let mut b = ort::session::Session::builder().map_err(ort_err)?;
+    b.commit_from_file(onnx_path).map_err(ort_err)
 }
 
 /// Qwen3-ASR model config (from config.json).
@@ -189,7 +189,7 @@ struct SpecialTokens {
     audio_end: u32,
 }
 
-fn ort_err(e: ort::Error) -> Error {
+fn ort_err<R>(e: ort::Error<R>) -> Error {
     Error::Ort(e.into())
 }
 

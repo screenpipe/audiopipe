@@ -130,6 +130,10 @@ impl ParakeetEngine {
 ///
 /// On Windows with `directml` feature: tries DirectML for GPU acceleration.
 /// Falls back to CPU if no accelerator works.
+fn ort_err<R>(e: ort::Error<R>) -> Error {
+    Error::Other(format!("ort: {e}"))
+}
+
 fn build_session_with_ep(onnx_path: &std::path::Path) -> Result<ort::session::Session> {
     let file_name = onnx_path.file_name().unwrap_or_default().to_string_lossy().to_string();
 
@@ -143,7 +147,7 @@ fn build_session_with_ep(onnx_path: &std::path::Path) -> Result<ort::session::Se
             .unwrap_or(false);
         if use_directml {
             match ort::session::Session::builder()
-                .and_then(|b| b.with_execution_providers([ort::execution_providers::DirectMLExecutionProvider::default().build()]))
+                .and_then(|b| b.with_execution_providers([ort::ep::DirectML::default().build()]))
                 .and_then(|b| b.commit_from_file(onnx_path))
             {
                 Ok(session) => {
@@ -160,10 +164,10 @@ fn build_session_with_ep(onnx_path: &std::path::Path) -> Result<ort::session::Se
     // CPU execution with thread limiting — default path.
     let intra_threads = 1;
     tracing::info!("parakeet: loading {} on CPU ({} threads)", file_name, intra_threads);
-    Ok(ort::session::Session::builder()?
-        .with_intra_threads(intra_threads)?
-        .with_inter_threads(1)?
-        .commit_from_file(onnx_path)?)
+    let b = ort::session::Session::builder().map_err(ort_err)?;
+    let b = b.with_intra_threads(intra_threads).map_err(ort_err)?;
+    let mut b = b.with_inter_threads(1).map_err(ort_err)?;
+    b.commit_from_file(onnx_path).map_err(ort_err)
 }
 
 /// Helper to extract f32 tensor from ort output as a raw shape + data.
