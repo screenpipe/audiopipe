@@ -146,10 +146,16 @@ fn build_session_with_ep(onnx_path: &std::path::Path) -> Result<ort::session::Se
             .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
             .unwrap_or(false);
         if use_directml {
-            match ort::session::Session::builder()
-                .and_then(|b| b.with_execution_providers([ort::ep::DirectML::default().build()]))
-                .and_then(|b| b.commit_from_file(onnx_path))
-            {
+            // rc.12 builder methods return Error<SessionBuilder>, which breaks the
+            // old and_then chain. Normalize through ort_err like the CPU path below.
+            let directml_session = (|| -> Result<ort::session::Session> {
+                let b = ort::session::Session::builder().map_err(ort_err)?;
+                let b = b
+                    .with_execution_providers([ort::ep::DirectML::default().build()])
+                    .map_err(ort_err)?;
+                b.commit_from_file(onnx_path).map_err(ort_err)
+            })();
+            match directml_session {
                 Ok(session) => {
                     tracing::info!("parakeet: DirectML session created for {}", file_name);
                     return Ok(session);
