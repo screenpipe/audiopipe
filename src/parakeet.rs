@@ -150,7 +150,7 @@ fn build_session_with_ep(onnx_path: &std::path::Path) -> Result<ort::session::Se
             // old and_then chain. Normalize through ort_err like the CPU path below.
             let directml_session = (|| -> Result<ort::session::Session> {
                 let b = ort::session::Session::builder().map_err(ort_err)?;
-                let b = b
+                let mut b = b
                     .with_execution_providers([ort::ep::DirectML::default().build()])
                     .map_err(ort_err)?;
                 b.commit_from_file(onnx_path).map_err(ort_err)
