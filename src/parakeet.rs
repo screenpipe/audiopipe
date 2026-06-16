@@ -161,8 +161,8 @@ fn build_session_with_ep(onnx_path: &std::path::Path) -> Result<ort::session::Se
     let intra_threads = 1;
     tracing::info!("parakeet: loading {} on CPU ({} threads)", file_name, intra_threads);
     Ok(ort::session::Session::builder()?
-        .with_intra_threads(intra_threads)?
-        .with_inter_threads(1)?
+        .with_intra_threads(intra_threads).map_err(|e| Error::Other(e.to_string()))?
+        .with_inter_threads(1).map_err(|e| Error::Other(e.to_string()))?
         .commit_from_file(onnx_path)?)
 }
 
