@@ -14,6 +14,7 @@ use mlx_rs::ops::indexing::IndexOp;
 use mlx_rs::Array;
 
 use super::rnnt::{JointNetwork, PredictNetwork};
+use crate::context_bias::ContextBiaser;
 use crate::model::Segment;
 
 /// An aligned token emitted during greedy TDT decoding.
@@ -56,6 +57,7 @@ pub fn greedy_tdt_decode(
     durations: &[usize],
     blank_id: usize,
     time_ratio: f64,
+    biaser: Option<&ContextBiaser>,
 ) -> Result<(String, Vec<Segment>), mlx_rs::error::Exception> {
     // encoder_out shape: [1, T, enc_hidden]
     let t_len = encoder_out.shape()[1] as usize;
@@ -69,26 +71,31 @@ pub fn greedy_tdt_decode(
     let mut aligned_tokens: Vec<AlignedToken> = Vec::new();
     let mut t: usize = 0;
     let mut symbols_per_step: usize = 0;
+    // Active keyterm-trie nodes for contextual biasing; root (0) is always active
+    // so a phrase can begin at any emission. Unused when `biaser` is None.
+    let mut active: Vec<usize> = vec![0];
 
-    tracing::info!("TDT decode: t_len={}, blank_id={}, vocab_size_plus_blank={}, n_durations={}",
-        t_len, blank_id, vocab_size_plus_blank, durations.len());
+    tracing::info!(
+        "TDT decode: t_len={}, blank_id={}, vocab_size_plus_blank={}, n_durations={}",
+        t_len,
+        blank_id,
+        vocab_size_plus_blank,
+        durations.len()
+    );
 
     while t < t_len {
         if t < 5 || t % 50 == 0 || t == 50 {
-            tracing::debug!("step t={}/{} tokens_emitted={}", t, t_len, aligned_tokens.len());
+            tracing::debug!(
+                "step t={}/{} tokens_emitted={}",
+                t,
+                t_len,
+                aligned_tokens.len()
+            );
         }
         // --- Prediction (decoder) step ---
         let (pred_out, new_h, new_c) = match &last_token {
-            Some(tok) => predict.predict_step(
-                tok,
-                h_states.as_deref(),
-                c_states.as_deref(),
-            )?,
-            None => predict.forward(
-                None,
-                h_states.as_deref(),
-                c_states.as_deref(),
-            )?,
+            Some(tok) => predict.predict_step(tok, h_states.as_deref(), c_states.as_deref())?,
+            None => predict.forward(None, h_states.as_deref(), c_states.as_deref())?,
         };
 
         // --- Joint step ---
@@ -109,12 +116,23 @@ pub fn greedy_tdt_decode(
         let token_logits = joint_1d.index(..vocab_size_plus_blank as i32);
         let duration_logits = joint_1d.index(vocab_size_plus_blank as i32..);
 
-        // --- Argmax for token and duration ---
-        let token_id = {
-            let token_logits_2d = token_logits.reshape(&[1, -1])?;
-            let idx = argmax_axis(&token_logits_2d, -1, false)?;
-            let idx_flat: Vec<u32> = idx.as_slice().to_vec();
-            idx_flat[0] as usize
+        // --- Argmax for token (optionally keyterm-biased) and duration ---
+        let token_id = match biaser {
+            // Shallow fusion: pull token logits to host, add the keyterm boost
+            // to tokens that advance an active phrase, then argmax in Rust. Costs
+            // one device sync per frame, but only when keyterms are configured.
+            Some(b) => {
+                mlx_rs::transforms::eval([&token_logits]).ok();
+                let mut scores: Vec<f32> = token_logits.as_slice().to_vec();
+                b.apply(&active, &mut scores);
+                crate::context_bias::argmax(&scores).unwrap_or(blank_id)
+            }
+            None => {
+                let token_logits_2d = token_logits.reshape(&[1, -1])?;
+                let idx = argmax_axis(&token_logits_2d, -1, false)?;
+                let idx_flat: Vec<u32> = idx.as_slice().to_vec();
+                idx_flat[0] as usize
+            }
         };
 
         let duration_idx = {
@@ -136,38 +154,76 @@ pub fn greedy_tdt_decode(
             let pv: Vec<f32> = pred_out.as_slice().to_vec();
             let pmin = pv.iter().copied().fold(f32::MAX, f32::min);
             let pmax = pv.iter().copied().fold(f32::MIN, f32::max);
-            tracing::info!("  pred_out: shape={:?}, range=[{:.4}, {:.4}]", pred_out.shape(), pmin, pmax);
+            tracing::info!(
+                "  pred_out: shape={:?}, range=[{:.4}, {:.4}]",
+                pred_out.shape(),
+                pmin,
+                pmax
+            );
 
             // Check enc_frame and joint intermediate
             mlx_rs::transforms::eval([&enc_frame_2d]).ok();
             let ev: Vec<f32> = enc_frame_2d.as_slice().to_vec();
-            tracing::info!("  enc_frame: shape={:?}, range=[{:.4}, {:.4}]",
-                enc_frame_2d.shape(), ev.iter().copied().fold(f32::MAX, f32::min), ev.iter().copied().fold(f32::MIN, f32::max));
+            tracing::info!(
+                "  enc_frame: shape={:?}, range=[{:.4}, {:.4}]",
+                enc_frame_2d.shape(),
+                ev.iter().copied().fold(f32::MAX, f32::min),
+                ev.iter().copied().fold(f32::MIN, f32::max)
+            );
 
             mlx_rs::transforms::eval([&joint_out]).ok();
             let jv: Vec<f32> = joint_out.as_slice().to_vec();
-            tracing::info!("  joint_out: shape={:?}, range=[{:.4}, {:.4}]",
-                joint_out.shape(), jv.iter().copied().fold(f32::MAX, f32::min), jv.iter().copied().fold(f32::MIN, f32::max));
+            tracing::info!(
+                "  joint_out: shape={:?}, range=[{:.4}, {:.4}]",
+                joint_out.shape(),
+                jv.iter().copied().fold(f32::MAX, f32::min),
+                jv.iter().copied().fold(f32::MIN, f32::max)
+            );
 
             mlx_rs::transforms::eval([&joint_1d]).ok();
             let j1: Vec<f32> = joint_1d.as_slice().to_vec();
-            tracing::info!("  joint_1d: shape={:?}, len={}, range=[{:.4}, {:.4}]",
-                joint_1d.shape(), j1.len(), j1.iter().copied().fold(f32::MAX, f32::min), j1.iter().copied().fold(f32::MIN, f32::max));
+            tracing::info!(
+                "  joint_1d: shape={:?}, len={}, range=[{:.4}, {:.4}]",
+                joint_1d.shape(),
+                j1.len(),
+                j1.iter().copied().fold(f32::MAX, f32::min),
+                j1.iter().copied().fold(f32::MIN, f32::max)
+            );
 
             mlx_rs::transforms::eval([&token_logits]).ok();
             let tl: Vec<f32> = token_logits.as_slice().to_vec();
-            tracing::info!("  token_logits: shape={:?}, len={}, range=[{:.4}, {:.4}]",
-                token_logits.shape(), tl.len(), tl.iter().copied().fold(f32::MAX, f32::min), tl.iter().copied().fold(f32::MIN, f32::max));
+            tracing::info!(
+                "  token_logits: shape={:?}, len={}, range=[{:.4}, {:.4}]",
+                token_logits.shape(),
+                tl.len(),
+                tl.iter().copied().fold(f32::MAX, f32::min),
+                tl.iter().copied().fold(f32::MIN, f32::max)
+            );
             mlx_rs::transforms::eval([&duration_logits]).ok();
             let dl: Vec<f32> = duration_logits.as_slice().to_vec();
             tracing::info!("  duration_logits: {:?}", dl);
             // Check joint output distribution
             let joint_vals: Vec<f32> = joint_1d.as_slice().to_vec();
             let blank_logit = joint_vals.get(blank_id).copied().unwrap_or(0.0);
-            let max_token_logit = joint_vals[..vocab_size_plus_blank].iter().copied().fold(f32::MIN, f32::max);
-            let max_token_id = joint_vals[..vocab_size_plus_blank].iter().enumerate().max_by(|a,b| a.1.partial_cmp(b.1).unwrap()).map(|(i,_)| i).unwrap_or(0);
-            tracing::info!("  t={}: token_id={}, blank_logit={:.4}, max_token_logit={:.4} (at {}), dur_idx={}",
-                t, token_id, blank_logit, max_token_logit, max_token_id, duration_idx);
+            let max_token_logit = joint_vals[..vocab_size_plus_blank]
+                .iter()
+                .copied()
+                .fold(f32::MIN, f32::max);
+            let max_token_id = joint_vals[..vocab_size_plus_blank]
+                .iter()
+                .enumerate()
+                .max_by(|a, b| a.1.partial_cmp(b.1).unwrap())
+                .map(|(i, _)| i)
+                .unwrap_or(0);
+            tracing::info!(
+                "  t={}: token_id={}, blank_logit={:.4}, max_token_logit={:.4} (at {}), dur_idx={}",
+                t,
+                token_id,
+                blank_logit,
+                max_token_logit,
+                max_token_id,
+                duration_idx
+            );
         }
 
         // --- TDT decoding rule ---
@@ -192,6 +248,9 @@ pub fn greedy_tdt_decode(
             c_states = Some(new_c);
 
             symbols_per_step += 1;
+            if let Some(b) = biaser {
+                active = b.advance(&active, token_id);
+            }
         }
 
         // Advance encoder pointer — ALWAYS advance by duration (matches Python)
@@ -303,8 +362,18 @@ mod tests {
     #[test]
     fn test_tokens_to_text_basic() {
         let tokens = vec![
-            AlignedToken { token_id: 0, start_frame: 0, duration_frames: 2, text: "\u{2581}hello".into() },
-            AlignedToken { token_id: 1, start_frame: 2, duration_frames: 2, text: "\u{2581}world".into() },
+            AlignedToken {
+                token_id: 0,
+                start_frame: 0,
+                duration_frames: 2,
+                text: "\u{2581}hello".into(),
+            },
+            AlignedToken {
+                token_id: 1,
+                start_frame: 2,
+                duration_frames: 2,
+                text: "\u{2581}world".into(),
+            },
         ];
         assert_eq!(tokens_to_text(&tokens), "hello world");
     }
@@ -312,9 +381,24 @@ mod tests {
     #[test]
     fn test_tokens_to_text_subword() {
         let tokens = vec![
-            AlignedToken { token_id: 0, start_frame: 0, duration_frames: 1, text: "\u{2581}hel".into() },
-            AlignedToken { token_id: 1, start_frame: 1, duration_frames: 1, text: "lo".into() },
-            AlignedToken { token_id: 2, start_frame: 3, duration_frames: 1, text: "\u{2581}world".into() },
+            AlignedToken {
+                token_id: 0,
+                start_frame: 0,
+                duration_frames: 1,
+                text: "\u{2581}hel".into(),
+            },
+            AlignedToken {
+                token_id: 1,
+                start_frame: 1,
+                duration_frames: 1,
+                text: "lo".into(),
+            },
+            AlignedToken {
+                token_id: 2,
+                start_frame: 3,
+                duration_frames: 1,
+                text: "\u{2581}world".into(),
+            },
         ];
         assert_eq!(tokens_to_text(&tokens), "hello world");
     }
@@ -322,8 +406,18 @@ mod tests {
     #[test]
     fn test_tokens_to_segments() {
         let tokens = vec![
-            AlignedToken { token_id: 0, start_frame: 0, duration_frames: 2, text: "\u{2581}hello".into() },
-            AlignedToken { token_id: 1, start_frame: 4, duration_frames: 2, text: "\u{2581}world".into() },
+            AlignedToken {
+                token_id: 0,
+                start_frame: 0,
+                duration_frames: 2,
+                text: "\u{2581}hello".into(),
+            },
+            AlignedToken {
+                token_id: 1,
+                start_frame: 4,
+                duration_frames: 2,
+                text: "\u{2581}world".into(),
+            },
         ];
         let time_ratio = 0.01; // 10ms per frame
         let segs = tokens_to_segments(&tokens, time_ratio);

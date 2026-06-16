@@ -20,6 +20,10 @@ mod error;
 mod hf_cache;
 mod model;
 
+// Shared keyterm contextual biasing for the Parakeet decoders (ONNX + MLX).
+#[cfg(any(feature = "parakeet", feature = "parakeet-mlx"))]
+mod context_bias;
+
 #[cfg(feature = "parakeet")]
 pub mod parakeet;
 
@@ -40,4 +44,3 @@ pub mod parakeet_mlx;
 
 pub use error::Error;
 pub use model::{Model, Segment, TranscribeOptions, TranscribeResult};
-

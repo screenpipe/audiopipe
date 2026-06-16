@@ -33,6 +33,7 @@ use mlx_rs::Array;
 use self::audio::{get_logmel, MelConfig};
 use self::decode::greedy_tdt_decode;
 use self::rnnt::{JointNetwork, PredictNetwork};
+use crate::context_bias::ContextBiaser;
 use crate::error::{Error, Result};
 use crate::hf_cache;
 use crate::model::{Engine, Segment, TranscribeOptions, TranscribeResult};
@@ -110,8 +111,7 @@ impl ParakeetMlxEngine {
         };
 
         tracing::info!("downloading {} from {}", name, repo);
-        let api = hf_hub::api::sync::Api::new()
-            .map_err(|e| Error::Download(e.to_string()))?;
+        let api = hf_hub::api::sync::Api::new().map_err(|e| Error::Download(e.to_string()))?;
         let model = api.model(repo.to_string());
 
         // Download required files
@@ -174,8 +174,13 @@ impl ParakeetMlxEngine {
                 .map_err(|e| Error::Other(format!("read config.json: {e}")))?;
             let config: serde_json::Value = serde_json::from_str(&config_str)
                 .map_err(|e| Error::Other(format!("parse config.json: {e}")))?;
-            if let Some(vocab_arr) = config.get("joint").and_then(|j| j.get("vocabulary")).and_then(|v| v.as_array()) {
-                vocab_arr.iter()
+            if let Some(vocab_arr) = config
+                .get("joint")
+                .and_then(|j| j.get("vocabulary"))
+                .and_then(|v| v.as_array())
+            {
+                vocab_arr
+                    .iter()
                     .filter_map(|v| v.as_str().map(|s| s.to_string()))
                     .collect::<Vec<String>>()
             } else {
@@ -230,16 +235,20 @@ impl ParakeetMlxEngine {
         {
             mlx_rs::transforms::eval([joint.enc_proj.weight.as_ref()]).ok();
             let w: Vec<f32> = joint.enc_proj.weight.as_ref().as_slice().to_vec();
-            tracing::info!("joint.enc_proj weight: shape={:?}, range=[{:.4}, {:.4}]",
+            tracing::info!(
+                "joint.enc_proj weight: shape={:?}, range=[{:.4}, {:.4}]",
                 joint.enc_proj.weight.as_ref().shape(),
                 w.iter().copied().fold(f32::MAX, f32::min),
-                w.iter().copied().fold(f32::MIN, f32::max));
+                w.iter().copied().fold(f32::MIN, f32::max)
+            );
             if let Some(ref b) = *joint.enc_proj.bias {
                 mlx_rs::transforms::eval([b]).ok();
                 let bv: Vec<f32> = b.as_slice().to_vec();
-                tracing::info!("joint.enc_proj bias: range=[{:.4}, {:.4}]",
+                tracing::info!(
+                    "joint.enc_proj bias: range=[{:.4}, {:.4}]",
                     bv.iter().copied().fold(f32::MAX, f32::min),
-                    bv.iter().copied().fold(f32::MIN, f32::max));
+                    bv.iter().copied().fold(f32::MIN, f32::max)
+                );
             } else {
                 tracing::warn!("joint.enc_proj bias: NONE!");
             }
@@ -248,8 +257,7 @@ impl ParakeetMlxEngine {
         encoder.load_weights(&weights, "encoder");
 
         let mel_config = MelConfig::default();
-        let time_ratio = SUBSAMPLING_FACTOR as f64
-            / mel_config.sample_rate as f64
+        let time_ratio = SUBSAMPLING_FACTOR as f64 / mel_config.sample_rate as f64
             * mel_config.hop_length as f64;
 
         Ok(Self {
@@ -272,7 +280,8 @@ impl Engine for ParakeetMlxEngine {
         sample_rate: u32,
         opts: &TranscribeOptions,
     ) -> Result<TranscribeResult> {
-        let _ = opts; // language / word_timestamps not yet used
+        // Keyterm contextual biasing (language / word_timestamps still unused).
+        let biaser = ContextBiaser::build(&opts.keyterms, &self.vocab, opts.keyterm_boost);
 
         // --- Resample to 16 kHz if necessary ---
         let audio_16k = if sample_rate != 16000 {
@@ -297,7 +306,9 @@ impl Engine for ParakeetMlxEngine {
         tracing::info!("mel: shape={:?}", mel.shape());
 
         // --- Conformer encoder: [1, T, 128] -> [1, T/8, 1024] ---
-        let (encoder_out, _lengths) = self.conformer.forward(&mel, None)
+        let (encoder_out, _lengths) = self
+            .conformer
+            .forward(&mel, None)
             .map_err(|e| Error::Other(format!("encoder failed: {e}")))?;
         // Evaluate and check range
         mlx_rs::transforms::eval([&encoder_out])
@@ -306,8 +317,13 @@ impl Engine for ParakeetMlxEngine {
         let enc_min = enc_slice.iter().copied().fold(f32::MAX, f32::min);
         let enc_max = enc_slice.iter().copied().fold(f32::MIN, f32::max);
         let enc_mean = enc_slice.iter().sum::<f32>() / enc_slice.len() as f32;
-        tracing::info!("encoder_out: shape={:?}, range=[{:.6}, {:.6}], mean={:.6}",
-            encoder_out.shape(), enc_min, enc_max, enc_mean);
+        tracing::info!(
+            "encoder_out: shape={:?}, range=[{:.6}, {:.6}], mean={:.6}",
+            encoder_out.shape(),
+            enc_min,
+            enc_max,
+            enc_mean
+        );
         // Print first 10 values of frame 0 for comparison with Python
         tracing::info!("enc[0,0,:10] = {:?}", &enc_slice[..10.min(enc_slice.len())]);
 
@@ -320,6 +336,7 @@ impl Engine for ParakeetMlxEngine {
             &self.durations,
             BLANK_ID,
             self.time_ratio,
+            biaser.as_ref(),
         )
         .map_err(|e| Error::Decode(format!("greedy TDT decode failed: {e}")))?;
 
@@ -400,7 +417,11 @@ fn load_safetensors(path: &Path) -> Result<HashMap<String, Array>> {
                 Array::from_slice(&f32_vals, &shape)
             }
             other => {
-                tracing::warn!("skipping tensor '{}' with unsupported dtype {:?}", name, other);
+                tracing::warn!(
+                    "skipping tensor '{}' with unsupported dtype {:?}",
+                    name,
+                    other
+                );
                 continue;
             }
         };
@@ -461,7 +482,11 @@ fn hf_get_with_retry(
             Ok(path) => return Ok(path),
             Err(e) => {
                 last_err = format!("attempt {}: {e}", attempt + 1);
-                tracing::warn!("download {} failed (attempt {}): {e}", filename, attempt + 1);
+                tracing::warn!(
+                    "download {} failed (attempt {}): {e}",
+                    filename,
+                    attempt + 1
+                );
             }
         }
     }
@@ -483,7 +508,8 @@ mod tests {
     #[test]
     fn test_time_ratio() {
         let config = MelConfig::default();
-        let ratio = SUBSAMPLING_FACTOR as f64 / config.sample_rate as f64 * config.hop_length as f64;
+        let ratio =
+            SUBSAMPLING_FACTOR as f64 / config.sample_rate as f64 * config.hop_length as f64;
         // 8 / 16000 * 160 = 0.08
         assert!((ratio - 0.08).abs() < 1e-10);
     }
