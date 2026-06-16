@@ -29,7 +29,7 @@ fn main() {
     }
 
     if is_windows {
-        // Use patched audio file and compat shim headers
+        // Use patched audio file and compat shim headers.
         build.file(compat.join("qwen_asr_audio_win.c"));
         build.include(&compat);
         build.define("_CRT_SECURE_NO_WARNINGS", None);
@@ -41,22 +41,33 @@ fn main() {
     }
 
     let use_openblas = std::env::var("CARGO_FEATURE_OPENBLAS").is_ok();
-    let openblas_path = std::env::var("OPENBLAS_PATH").ok().map(std::path::PathBuf::from);
+
+    let openblas_path: Option<std::path::PathBuf> = if use_openblas {
+        std::env::var("OPENBLAS_PATH").ok().map(std::path::PathBuf::from)
+    } else {
+        None
+    };
 
     if is_macos {
         build.define("USE_BLAS", None);
         build.define("ACCELERATE_NEW_LAPACK", None);
     } else if use_openblas {
-        build.define("USE_BLAS", None);
-        build.define("USE_OPENBLAS", None);
         if let Some(ref p) = openblas_path {
+            build.define("USE_BLAS", None);
+            build.define("USE_OPENBLAS", None);
             build.include(p.join("include"));
+        } else {
+            println!(
+                "cargo:warning=antirez-asr-sys: openblas feature requested but OPENBLAS_PATH \
+                 is not set or does not contain include/cblas.h. \
+                 Falling back to generic/NEON kernels."
+            );
         }
     }
 
     build.compile("antirez_asr");
 
-    // AVX2+FMA kernel file (x86 only, compiled separately with arch flags)
+    // AVX2+FMA kernel (x86 only, compiled separately with arch flags).
     if target_arch == "x86_64" || target_arch == "x86" {
         let mut avx_build = cc::Build::new();
         avx_build
@@ -75,18 +86,16 @@ fn main() {
             avx_build.flag("-mavx2").flag("-mfma");
         }
 
-        if use_openblas {
+        if let Some(ref p) = openblas_path {
             avx_build.define("USE_BLAS", None);
             avx_build.define("USE_OPENBLAS", None);
-            if let Some(ref p) = openblas_path {
-                avx_build.include(p.join("include"));
-            }
+            avx_build.include(p.join("include"));
         }
 
         avx_build.compile("antirez_asr_avx");
     }
 
-    // NEON kernel file (ARM only)
+    // NEON kernel (ARM64 only).
     if target_arch == "aarch64" {
         let mut neon_build = cc::Build::new();
         neon_build
@@ -94,7 +103,12 @@ fn main() {
             .opt_level(3)
             .include(&src)
             .file(src.join("qwen_asr_kernels_neon.c"));
-        if !is_windows {
+        if is_windows {
+            // ARM64 Windows needs the compat shim headers (pthread, unistd…)
+            // and c11 mode just like the common sources.
+            neon_build.include(&compat);
+            neon_build.std("c11");
+        } else {
             neon_build.flag("-std=c11");
         }
         neon_build.compile("antirez_asr_neon");
@@ -102,13 +116,16 @@ fn main() {
 
     if is_macos {
         println!("cargo:rustc-link-lib=framework=Accelerate");
-    } else if use_openblas {
-        if let Some(ref p) = openblas_path {
-            println!("cargo:rustc-link-search=native={}", p.join("lib").display());
-        }
+    } else if let Some(ref p) = openblas_path {
+        println!(
+            "cargo:rustc-link-search=native={}",
+            p.join("lib").display()
+        );
         println!("cargo:rustc-link-lib=dylib=libopenblas");
+
     }
 
+    println!("cargo:rerun-if-env-changed=OPENBLAS_PATH");
     println!("cargo:rerun-if-changed=qwen-asr/");
     println!("cargo:rerun-if-changed=compat/");
 }
