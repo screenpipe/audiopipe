@@ -26,7 +26,12 @@ pub struct Model {
 
 /// Engine trait — implemented by each backend (Parakeet, Whisper, etc.).
 pub(crate) trait Engine: Send + Sync {
-    fn transcribe(&mut self, audio: &[f32], sample_rate: u32, opts: &TranscribeOptions) -> Result<TranscribeResult>;
+    fn transcribe(
+        &mut self,
+        audio: &[f32],
+        sample_rate: u32,
+        opts: &TranscribeOptions,
+    ) -> Result<TranscribeResult>;
     fn name(&self) -> &str;
 }
 
@@ -37,6 +42,19 @@ pub struct TranscribeOptions {
     pub language: Option<String>,
     /// Return word-level timestamps.
     pub word_timestamps: bool,
+    /// Phrases to bias the decoder toward — contextual biasing / "keyterms"
+    /// (attendee names, product/company terms, jargon). Honored by the Parakeet
+    /// TDT engine via shallow-fusion logit boosting in greedy decode; other
+    /// engines currently ignore it. No retraining required.
+    pub keyterms: Vec<String>,
+    /// Additive logit boost applied to each token that advances a keyterm match
+    /// (shallow-fusion weight). Ignored when `keyterms` is empty or <= 0.
+    ///
+    /// Measured on the edge-case WER corpus: ~6 is optimal (overall WER −2.2pt,
+    /// proper-name WER 21%→7%, product 42%→25%). The safe range is ~4-8; at >=10
+    /// the decoder over-inserts keyterm tokens and WER degrades sharply, so
+    /// callers should keep this modest.
+    pub keyterm_boost: f32,
 }
 
 impl Default for TranscribeOptions {
@@ -44,6 +62,8 @@ impl Default for TranscribeOptions {
         Self {
             language: None,
             word_timestamps: false,
+            keyterms: Vec::new(),
+            keyterm_boost: 6.0,
         }
     }
 }
@@ -166,10 +186,17 @@ impl Model {
             .name("audiopipe-hf-download".to_string())
             .spawn(move || match Self::from_pretrained(&name) {
                 Ok(_) => tracing::info!("audiopipe: pretrained model ready: {}", name),
-                Err(e) => tracing::warn!("audiopipe: pretrained download/load failed for {}: {}", name, e),
+                Err(e) => tracing::warn!(
+                    "audiopipe: pretrained download/load failed for {}: {}",
+                    name,
+                    e
+                ),
             });
         if res.is_err() {
-            tracing::warn!("audiopipe: failed to spawn hf download thread for {}", log_name);
+            tracing::warn!(
+                "audiopipe: failed to spawn hf download thread for {}",
+                log_name
+            );
         }
     }
 
@@ -179,40 +206,67 @@ impl Model {
             #[cfg(feature = "parakeet")]
             "parakeet" => {
                 let engine = crate::parakeet::ParakeetEngine::from_dir(path)?;
-                Ok(Self { inner: Box::new(engine), uses_gpu: false })
+                Ok(Self {
+                    inner: Box::new(engine),
+                    uses_gpu: false,
+                })
             }
             #[cfg(feature = "whisper")]
             "whisper" => {
                 let engine = crate::whisper::WhisperEngine::from_dir(path)?;
-                Ok(Self { inner: Box::new(engine), uses_gpu: false })
+                Ok(Self {
+                    inner: Box::new(engine),
+                    uses_gpu: false,
+                })
             }
             #[cfg(feature = "qwen3-asr")]
             "qwen3-asr" => {
                 let engine = crate::qwen3_asr::Qwen3AsrEngine::from_dir(path)?;
-                Ok(Self { inner: Box::new(engine), uses_gpu: false })
+                Ok(Self {
+                    inner: Box::new(engine),
+                    uses_gpu: false,
+                })
             }
             #[cfg(feature = "qwen3-asr-ggml")]
             "qwen3-asr-ggml" => {
                 let engine = crate::qwen3_asr_ggml::Qwen3AsrGgmlEngine::from_dir(path)?;
-                Ok(Self { inner: Box::new(engine), uses_gpu: false })
+                Ok(Self {
+                    inner: Box::new(engine),
+                    uses_gpu: false,
+                })
             }
             #[cfg(feature = "qwen3-asr-antirez")]
             "qwen3-asr-antirez" => {
                 let engine = crate::qwen3_asr_antirez::AntirezAsrEngine::from_dir(path)?;
-                Ok(Self { inner: Box::new(engine), uses_gpu: false })
+                Ok(Self {
+                    inner: Box::new(engine),
+                    uses_gpu: false,
+                })
             }
-            _ => Err(Error::ModelNotFound(format!("unknown engine type '{}'", engine_type))),
+            _ => Err(Error::ModelNotFound(format!(
+                "unknown engine type '{}'",
+                engine_type
+            ))),
         }
     }
 
     /// Transcribe 16kHz f32 mono audio.
-    pub fn transcribe(&mut self, audio: &[f32], opts: TranscribeOptions) -> Result<TranscribeResult> {
+    pub fn transcribe(
+        &mut self,
+        audio: &[f32],
+        opts: TranscribeOptions,
+    ) -> Result<TranscribeResult> {
         let _guard = self.acquire_gpu_lock();
         self.inner.transcribe(audio, 16000, &opts)
     }
 
     /// Transcribe audio at a given sample rate (resampled internally to 16kHz).
-    pub fn transcribe_with_sample_rate(&mut self, audio: &[f32], sample_rate: u32, opts: TranscribeOptions) -> Result<TranscribeResult> {
+    pub fn transcribe_with_sample_rate(
+        &mut self,
+        audio: &[f32],
+        sample_rate: u32,
+        opts: TranscribeOptions,
+    ) -> Result<TranscribeResult> {
         let _guard = self.acquire_gpu_lock();
         if sample_rate == 16000 {
             return self.inner.transcribe(audio, 16000, &opts);

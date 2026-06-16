@@ -47,6 +47,14 @@ path = "examples/bench_batch.rs"
 name = "bench_asr"
 path = "examples/bench_asr.rs"
 
+[[example]]
+name = "context_bias_demo"
+path = "examples/context_bias_demo.rs"
+
+[[example]]
+name = "bench_context_bias"
+path = "examples/bench_context_bias.rs"
+
 [features]
 default = ["ort-defaults"]
 

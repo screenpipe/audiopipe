@@ -28,20 +28,20 @@ impl ParakeetEngine {
         };
 
         tracing::info!("downloading {} from {}", name, repo);
-        let api = hf_hub::api::sync::Api::new()
-            .map_err(|e| Error::Download(e.to_string()))?;
+        let api = hf_hub::api::sync::Api::new().map_err(|e| Error::Download(e.to_string()))?;
         let model = api.model(repo.to_string());
 
         // Download int8 models first (preferred: self-contained, CoreML compatible)
         let encoder_file = hf_get_with_retry(&model, "encoder-model.int8.onnx", 3)
             .or_else(|_| hf_get_with_retry(&model, "encoder-model.onnx", 3))
             .map_err(|e| Error::Download(format!("encoder: {e}")))?;
-        let model_dir = encoder_file.parent().unwrap_or(std::path::Path::new(".")).to_path_buf();
+        let model_dir = encoder_file
+            .parent()
+            .unwrap_or(std::path::Path::new("."))
+            .to_path_buf();
 
         // Download all required files (try int8 first, fallback to fp32)
-        for (int8, fp32) in &[
-            ("decoder_joint-model.int8.onnx", "decoder_joint-model.onnx"),
-        ] {
+        for (int8, fp32) in &[("decoder_joint-model.int8.onnx", "decoder_joint-model.onnx")] {
             let _ = hf_get_with_retry(&model, int8, 3)
                 .or_else(|_| hf_get_with_retry(&model, fp32, 3))
                 .map_err(|e| Error::Download(format!("{fp32}: {e}")))?;
@@ -75,7 +75,8 @@ impl ParakeetEngine {
             .to_path_buf();
 
         for (int8, fp32) in &[("decoder_joint-model.int8.onnx", "decoder_joint-model.onnx")] {
-            let ok = hf_cache::cache_get(repo, int8).is_some() || hf_cache::cache_get(repo, fp32).is_some();
+            let ok = hf_cache::cache_get(repo, int8).is_some()
+                || hf_cache::cache_get(repo, fp32).is_some();
             if !ok {
                 return Err(Error::ModelNotCached(name.to_string()));
             }
@@ -97,7 +98,10 @@ impl ParakeetEngine {
         // work with CoreML's MLProgram format for ANE acceleration.
         // fp32 models with external data can't use CoreML due to ort limitations.
         let encoder_path = find_file(dir, &["encoder-model.int8.onnx", "encoder-model.onnx"])?;
-        let decoder_path = find_file(dir, &["decoder_joint-model.int8.onnx", "decoder_joint-model.onnx"])?;
+        let decoder_path = find_file(
+            dir,
+            &["decoder_joint-model.int8.onnx", "decoder_joint-model.onnx"],
+        )?;
         let vocab_path = find_file(dir, &["vocab.txt"])?;
 
         let vocab = load_vocab(&vocab_path)?;
@@ -151,7 +155,11 @@ fn build_session_with_ep(onnx_path: &std::path::Path) -> Result<ort::session::Se
                     return Ok(session);
                 }
                 Err(e) => {
-                    tracing::warn!("parakeet: DirectML failed for {}, falling back to CPU: {}", file_name, e);
+                    tracing::warn!(
+                        "parakeet: DirectML failed for {}, falling back to CPU: {}",
+                        file_name,
+                        e
+                    );
                 }
             }
         }
@@ -176,7 +184,12 @@ fn extract_f32(val: &ort::value::DynValue) -> Result<(Vec<usize>, Vec<f32>)> {
 }
 
 impl Engine for ParakeetEngine {
-    fn transcribe(&mut self, audio_samples: &[f32], sample_rate: u32, _opts: &TranscribeOptions) -> Result<TranscribeResult> {
+    fn transcribe(
+        &mut self,
+        audio_samples: &[f32],
+        sample_rate: u32,
+        opts: &TranscribeOptions,
+    ) -> Result<TranscribeResult> {
         let audio = if sample_rate != 16000 {
             audio::resample(audio_samples, sample_rate, 16000)
         } else {
@@ -189,7 +202,8 @@ impl Engine for ParakeetEngine {
         let n_feats = features.shape()[1];
 
         // Encoder expects [batch=1, features, time]
-        let input = features.t()
+        let input = features
+            .t()
             .to_shape((1, n_feats, n_frames))
             .map_err(|e| Error::Other(format!("reshape: {e}")))?
             .to_owned();
@@ -206,14 +220,22 @@ impl Engine for ParakeetEngine {
         let enc_array = Array3::from_shape_vec((b, enc_t, enc_d), enc_data)
             .map_err(|e| Error::Other(format!("encoder array: {e}")))?;
 
-        // Greedy TDT decode
+        // Greedy TDT decode, with optional contextual biasing toward keyterms.
+        let biaser = ContextBiaser::build(&opts.keyterms, &self.vocab, opts.keyterm_boost);
         let (tokens, frame_indices) = greedy_tdt_decode(
-            &mut self.decoder, &enc_array, self.vocab_size,
+            &mut self.decoder,
+            &enc_array,
+            self.vocab_size,
+            biaser.as_ref(),
         )?;
 
         // Tokens to text
         let audio_secs = audio.len() as f64 / 16000.0;
-        let frame_rate = if enc_t > 0 { audio_secs / enc_t as f64 } else { 0.0 };
+        let frame_rate = if enc_t > 0 {
+            audio_secs / enc_t as f64
+        } else {
+            0.0
+        };
         let mut text = String::new();
         let mut segments = Vec::new();
 
@@ -248,6 +270,7 @@ fn greedy_tdt_decode(
     decoder: &mut ort::session::Session,
     encoder_out: &Array3<f32>,
     vocab_size: usize,
+    biaser: Option<&ContextBiaser>,
 ) -> Result<(Vec<usize>, Vec<usize>)> {
     let enc_dim = encoder_out.shape()[1];
     let time_steps = encoder_out.shape()[2];
@@ -262,10 +285,14 @@ fn greedy_tdt_decode(
     let mut t = 0;
     let mut emitted = 0;
     let mut last_token = blank_id as i32;
+    // Active keyterm-trie nodes for contextual biasing; root (0) is always
+    // active so a phrase can begin at any emission. Unused when biaser is None.
+    let mut active: Vec<usize> = vec![0];
 
     while t < time_steps {
         let frame = encoder_out.slice(ndarray::s![0, .., t]).to_owned();
-        let frame = frame.to_shape((1, enc_dim, 1))
+        let frame = frame
+            .to_shape((1, enc_dim, 1))
             .map_err(|e| Error::Other(format!("frame reshape: {e}")))?
             .to_owned();
 
@@ -284,13 +311,26 @@ fn greedy_tdt_decode(
 
         let (_, logits) = extract_f32(&out["outputs"])?;
 
-        let token_id = logits.iter().take(vocab_size)
-            .enumerate()
-            .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-            .map(|(i, _)| i)
-            .unwrap_or(blank_id);
+        let token_id = match biaser {
+            // Shallow fusion: boost tokens that advance an active keyterm match,
+            // then argmax over the biased vocab logits.
+            Some(b) => {
+                let mut scores: Vec<f32> = logits[..vocab_size].to_vec();
+                b.apply(&active, &mut scores);
+                argmax(&scores).unwrap_or(blank_id)
+            }
+            None => logits
+                .iter()
+                .take(vocab_size)
+                .enumerate()
+                .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                .map(|(i, _)| i)
+                .unwrap_or(blank_id),
+        };
 
-        let dur = logits.iter().skip(vocab_size)
+        let dur = logits
+            .iter()
+            .skip(vocab_size)
             .enumerate()
             .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
             .map(|(i, _)| i)
@@ -311,6 +351,9 @@ fn greedy_tdt_decode(
             frame_indices.push(t);
             last_token = token_id as i32;
             emitted += 1;
+            if let Some(b) = biaser {
+                active = b.advance(&active, token_id);
+            }
         }
 
         if dur > 0 {
@@ -341,7 +384,11 @@ fn hf_get_with_retry(
                     let delay = std::time::Duration::from_secs(2u64.pow(attempt));
                     tracing::warn!(
                         "parakeet: download {} failed (attempt {}/{}): {}, retrying in {:?}",
-                        filename, attempt + 1, max_retries, last_err, delay
+                        filename,
+                        attempt + 1,
+                        max_retries,
+                        last_err,
+                        delay
                     );
                     std::thread::sleep(delay);
                 }
@@ -359,19 +406,22 @@ fn find_file(dir: &Path, candidates: &[&str]) -> Result<PathBuf> {
         }
     }
     Err(Error::ModelNotFound(format!(
-        "none of {:?} found in {}", candidates, dir.display()
+        "none of {:?} found in {}",
+        candidates,
+        dir.display()
     )))
 }
 
 fn load_vocab(path: &Path) -> Result<Vec<String>> {
-    let content = std::fs::read_to_string(path)
-        .map_err(|e| Error::Other(format!("read vocab: {e}")))?;
+    let content =
+        std::fs::read_to_string(path).map_err(|e| Error::Other(format!("read vocab: {e}")))?;
     let mut vocab = Vec::new();
     for line in content.lines() {
         let parts: Vec<&str> = line.splitn(2, ' ').collect();
         if parts.len() == 2 {
             let token = parts[0].to_string();
-            let id: usize = parts[1].parse()
+            let id: usize = parts[1]
+                .parse()
                 .map_err(|e| Error::Other(format!("vocab id: {e}")))?;
             if id >= vocab.len() {
                 vocab.resize(id + 1, String::new());
@@ -380,4 +430,284 @@ fn load_vocab(path: &Path) -> Result<Vec<String>> {
         }
     }
     Ok(vocab)
+}
+
+// ─── Contextual biasing ("keyterm prompting") ────────────────────────────────
+
+/// A token-prefix trie + shallow-fusion booster for the greedy TDT decoder.
+///
+/// Key phrases are tokenized into the model's SentencePiece vocab (greedy
+/// longest-match) and inserted into a trie. During decode we keep the set of
+/// trie nodes consistent with the tokens emitted so far — the root is always
+/// active so a phrase can start at any emission — and each step we add `boost`
+/// to the logit of any token that would advance an active node. This nudges the
+/// greedy argmax toward known names/products without retraining or beam search.
+struct ContextBiaser {
+    /// `nodes[i]` maps a token id to its child node index. Node 0 is the root.
+    nodes: Vec<std::collections::HashMap<usize, usize>>,
+    boost: f32,
+}
+
+impl ContextBiaser {
+    /// Returns `None` when there is nothing to bias: no phrases, non-positive
+    /// boost, or no phrase tokenized into known (non-control) pieces.
+    fn build(keyterms: &[String], vocab: &[String], boost: f32) -> Option<Self> {
+        if keyterms.is_empty() || boost <= 0.0 {
+            return None;
+        }
+        // piece -> id, skipping control tokens (<unk>, <|...|>, <pad>, <blk>, …).
+        let mut piece_to_id: std::collections::HashMap<&str, usize> =
+            std::collections::HashMap::with_capacity(vocab.len());
+        for (id, piece) in vocab.iter().enumerate() {
+            if piece.is_empty() || piece.starts_with('<') {
+                continue;
+            }
+            piece_to_id.entry(piece.as_str()).or_insert(id);
+        }
+
+        let mut nodes: Vec<std::collections::HashMap<usize, usize>> = vec![Default::default()];
+        let mut seen: std::collections::HashSet<Vec<usize>> = std::collections::HashSet::new();
+        let mut phrases_added = 0usize;
+        for phrase in keyterms {
+            for variant in casing_variants(phrase) {
+                let toks = tokenize_greedy(&to_sp_form(&variant), &piece_to_id);
+                if std::env::var("CB_DEBUG").is_ok() {
+                    let pieces: Vec<&str> = toks.iter().map(|&t| vocab[t].as_str()).collect();
+                    eprintln!("[ctx-bias] {variant:?} -> ids {toks:?} pieces {pieces:?}");
+                }
+                if toks.is_empty() || !seen.insert(toks.clone()) {
+                    continue;
+                }
+                let mut node = 0usize;
+                for tok in toks {
+                    node = match nodes[node].get(&tok).copied() {
+                        Some(child) => child,
+                        None => {
+                            let child = nodes.len();
+                            nodes.push(Default::default());
+                            nodes[node].insert(tok, child);
+                            child
+                        }
+                    };
+                }
+                phrases_added += 1;
+            }
+        }
+        if phrases_added == 0 {
+            return None;
+        }
+        Some(Self { nodes, boost })
+    }
+
+    /// Add `boost` to every token that advances one of the active trie nodes.
+    fn apply(&self, active: &[usize], logits: &mut [f32]) {
+        for &n in active {
+            for &tok in self.nodes[n].keys() {
+                if let Some(l) = logits.get_mut(tok) {
+                    *l += self.boost;
+                }
+            }
+        }
+    }
+
+    /// Active node set after emitting `token`: the root (so a fresh phrase can
+    /// start) plus children reached from currently-active nodes via `token`.
+    fn advance(&self, active: &[usize], token: usize) -> Vec<usize> {
+        let mut next = Vec::with_capacity(active.len() + 1);
+        next.push(0);
+        for &n in active {
+            if let Some(&child) = self.nodes[n].get(&token) {
+                if child != 0 {
+                    next.push(child);
+                }
+            }
+        }
+        next.sort_unstable();
+        next.dedup();
+        next
+    }
+}
+
+/// SentencePiece surface form: word starts get the `▁` marker, runs of
+/// whitespace collapse to a single boundary.
+fn to_sp_form(phrase: &str) -> String {
+    let mut s = String::new();
+    let mut at_boundary = true;
+    for c in phrase.trim().chars() {
+        if c.is_whitespace() {
+            at_boundary = true;
+        } else {
+            if at_boundary {
+                s.push('▁');
+                at_boundary = false;
+            }
+            s.push(c);
+        }
+    }
+    s
+}
+
+/// Casing variants worth biasing: as-given plus Title-Case-Each-Word. The vocab
+/// is cased and proper nouns / product names are usually capitalized, so a
+/// lowercase keyterm like "screenpipe" should still match "▁Screen…".
+fn casing_variants(phrase: &str) -> Vec<String> {
+    let title: String = phrase
+        .split_whitespace()
+        .map(|w| {
+            let mut ch = w.chars();
+            match ch.next() {
+                Some(f) => f.to_uppercase().collect::<String>() + ch.as_str(),
+                None => String::new(),
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(" ");
+    let mut out = vec![phrase.to_string()];
+    if title != *phrase {
+        out.push(title);
+    }
+    out
+}
+
+/// Greedy longest-match tokenization of a SentencePiece surface string against
+/// the model's pieces. Unmatched characters are skipped. Operates on char
+/// boundaries so the multibyte `▁` marker is never split.
+fn tokenize_greedy(
+    sp_text: &str,
+    piece_to_id: &std::collections::HashMap<&str, usize>,
+) -> Vec<usize> {
+    const MAX_PIECE_CHARS: usize = 24;
+    let offsets: Vec<usize> = sp_text.char_indices().map(|(i, _)| i).collect();
+    let n = offsets.len();
+    let mut out = Vec::new();
+    let mut i = 0usize;
+    while i < n {
+        let start = offsets[i];
+        let max_j = (i + MAX_PIECE_CHARS).min(n);
+        let mut matched: Option<(usize, usize)> = None;
+        for j in (i + 1..=max_j).rev() {
+            let end = if j < n { offsets[j] } else { sp_text.len() };
+            if let Some(&id) = piece_to_id.get(&sp_text[start..end]) {
+                matched = Some((id, j));
+                break;
+            }
+        }
+        match matched {
+            Some((id, j)) => {
+                out.push(id);
+                i = j;
+            }
+            None => i += 1,
+        }
+    }
+    out
+}
+
+fn argmax(v: &[f32]) -> Option<usize> {
+    v.iter()
+        .enumerate()
+        .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
+        .map(|(i, _)| i)
+}
+
+#[cfg(test)]
+mod context_biasing_tests {
+    use super::*;
+    use std::collections::HashMap;
+
+    fn mini_vocab() -> Vec<String> {
+        vec![
+            "<unk>".into(),    // 0  control (skipped)
+            "▁the".into(),     // 1
+            "▁Screen".into(),  // 2
+            "pipe".into(),     // 3
+            "▁Ar".into(),      // 4
+            "v".into(),        // 5
+            "ind".into(),      // 6
+            "▁meeting".into(), // 7
+            "<blk>".into(),    // 8  control (skipped)
+        ]
+    }
+
+    fn piece_map(vocab: &[String]) -> HashMap<&str, usize> {
+        let mut m = HashMap::new();
+        for (id, s) in vocab.iter().enumerate() {
+            if !s.is_empty() && !s.starts_with('<') {
+                m.insert(s.as_str(), id);
+            }
+        }
+        m
+    }
+
+    #[test]
+    fn sp_form_marks_word_boundaries() {
+        assert_eq!(to_sp_form("screen pipe"), "▁screen▁pipe");
+        assert_eq!(to_sp_form("  Arvind  "), "▁Arvind");
+        assert_eq!(to_sp_form("a\tb  c"), "▁a▁b▁c");
+    }
+
+    #[test]
+    fn casing_adds_title_variant() {
+        let v = casing_variants("screenpipe");
+        assert!(v.contains(&"screenpipe".to_string()));
+        assert!(v.contains(&"Screenpipe".to_string()));
+        // already-capitalized: no duplicate
+        assert_eq!(casing_variants("Arvind"), vec!["Arvind".to_string()]);
+    }
+
+    #[test]
+    fn greedy_tokenizes_into_longest_pieces() {
+        let vocab = mini_vocab();
+        let p2i = piece_map(&vocab);
+        assert_eq!(tokenize_greedy(&to_sp_form("Screenpipe"), &p2i), vec![2, 3]);
+        assert_eq!(tokenize_greedy(&to_sp_form("Arvind"), &p2i), vec![4, 5, 6]);
+        // unknown content tokenizes to nothing
+        assert!(tokenize_greedy(&to_sp_form("zzzz"), &p2i).is_empty());
+    }
+
+    #[test]
+    fn biaser_boosts_initial_then_advances_along_phrase() {
+        let vocab = mini_vocab();
+        let b = ContextBiaser::build(&["Screenpipe".to_string()], &vocab, 5.0).unwrap();
+
+        // At the root only the phrase-initial token (▁Screen = 2) is boosted.
+        let active = vec![0usize];
+        let mut logits = vec![0.0f32; vocab.len()];
+        b.apply(&active, &mut logits);
+        assert_eq!(logits[2], 5.0);
+        assert_eq!(logits[3], 0.0);
+
+        // After emitting ▁Screen, the continuation 'pipe' (3) is boosted, and the
+        // root stays active so a new phrase could still start (2 still boosted).
+        let active = b.advance(&active, 2);
+        let mut logits = vec![0.0f32; vocab.len()];
+        b.apply(&active, &mut logits);
+        assert_eq!(logits[3], 5.0);
+        assert_eq!(logits[2], 5.0);
+
+        // Emitting a non-continuing token drops the partial match back to root.
+        let active = b.advance(&active, 7);
+        assert_eq!(active, vec![0]);
+    }
+
+    #[test]
+    fn build_returns_none_when_nothing_to_bias() {
+        let vocab = mini_vocab();
+        assert!(ContextBiaser::build(&[], &vocab, 5.0).is_none());
+        assert!(ContextBiaser::build(&["Screenpipe".into()], &vocab, 0.0).is_none());
+        assert!(ContextBiaser::build(&["zzzz".into()], &vocab, 5.0).is_none());
+    }
+
+    #[test]
+    fn control_tokens_are_never_boosted() {
+        let vocab = mini_vocab();
+        // "the" maps to id 1; build a biaser and confirm control ids 0 and 8
+        // never receive boost regardless of active set.
+        let b = ContextBiaser::build(&["the".into()], &vocab, 3.0).unwrap();
+        let mut logits = vec![0.0f32; vocab.len()];
+        b.apply(&[0], &mut logits);
+        assert_eq!(logits[0], 0.0);
+        assert_eq!(logits[8], 0.0);
+        assert_eq!(logits[1], 3.0); // ▁the boosted
+    }
 }
