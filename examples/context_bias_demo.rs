@@ -45,7 +45,9 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     };
     let audio_secs = audio.len() as f64 / spec.sample_rate as f64;
 
-    let mut model = audiopipe::Model::from_pretrained_cache_only("parakeet-tdt-0.6b-v3")?;
+    // MODEL=parakeet-tdt-0.6b-v3-mlx exercises the MLX (Metal) decoder.
+    let model_name = std::env::var("MODEL").unwrap_or_else(|_| "parakeet-tdt-0.6b-v3".to_string());
+    let mut model = audiopipe::Model::from_pretrained_cache_only(&model_name)?;
 
     let t0 = std::time::Instant::now();
     let base = model.transcribe_with_sample_rate(
