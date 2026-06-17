@@ -151,13 +151,19 @@ fn build_session_with_ep(onnx_path: &std::path::Path) -> Result<ort::session::Se
             .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
             .unwrap_or(false);
         if use_directml {
-            match ort::session::Session::builder()
-                .and_then(|b| {
-                    b.with_execution_providers([
+            // ort rc.12: each builder step returns Result<SessionBuilder, Error<SessionBuilder>>,
+            // whose error type doesn't unify across `.and_then` (E0308), so normalize each step
+            // with map_err + `?` exactly like the CPU path below. Wrapped in a closure so the
+            // CPU fallback can still match on Err.
+            let directml_session: Result<ort::session::Session> = (|| {
+                Ok(ort::session::Session::builder()?
+                    .with_execution_providers([
                         ort::execution_providers::DirectMLExecutionProvider::default().build(),
                     ])
-                })
-                .and_then(|b| b.commit_from_file(onnx_path))
+                    .map_err(|e| Error::Other(e.to_string()))?
+                    .commit_from_file(onnx_path)?)
+            })();
+            match directml_session
             {
                 Ok(session) => {
                     tracing::info!("parakeet: DirectML session created for {}", file_name);
