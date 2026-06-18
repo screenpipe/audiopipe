@@ -42,16 +42,23 @@ use crate::model::{Engine, Segment, TranscribeOptions, TranscribeResult};
 // Model constants (Parakeet TDT 0.6B)
 // ---------------------------------------------------------------------------
 
-/// Vocabulary size (number of SentencePiece tokens, excluding blank).
+/// Default vocabulary size used to *allocate* the networks before the
+/// safetensors weights are loaded. The v3 (multilingual) model has 8192
+/// SentencePiece tokens; the v2 (English) model has 1024. `load_weights`
+/// REPLACES every parameter array with the tensor from the safetensors file,
+/// so the real per-model dimensions come from the weights, not these
+/// constants — they only need to be a valid shape to construct the modules.
+/// The decode-time vocab size / blank id are derived per model in `from_dir`
+/// (see [`ParakeetMlxEngine::blank_id`]); do NOT use these constants for
+/// decoding or you will mis-slice the joint output for non-v3 models.
 const VOCAB_SIZE: usize = 8192;
 
-/// Blank token index (= vocab_size).
-const BLANK_ID: usize = VOCAB_SIZE;
-
 /// TDT duration table: how many encoder frames to advance per joint output.
+/// Architecture-fixed for Parakeet TDT 0.6B (both v2 and v3).
 const DURATIONS: &[usize] = &[0, 1, 2, 3, 4];
 
-/// Number of joint output classes = vocab + 1 blank + 5 durations.
+/// Number of joint output classes used to allocate the joint network's output
+/// projection = default vocab + 1 blank + durations. Replaced at load time.
 const NUM_CLASSES: i32 = (VOCAB_SIZE as i32) + 1 + (DURATIONS.len() as i32);
 
 /// Encoder output dimension.
@@ -83,6 +90,12 @@ pub struct ParakeetMlxEngine {
     mel_config: MelConfig,
     vocab: Vec<String>,
     durations: Vec<usize>,
+    /// Blank token index for this specific model, derived from the loaded joint
+    /// output projection (`num_classes - durations - 1`). v2 (English) = 1024,
+    /// v3 (multilingual) = 8192. Used to split the joint logits into the token
+    /// head (`[..=blank_id]`) and the duration head (`[blank_id+1..]`) during
+    /// greedy TDT decoding.
+    blank_id: usize,
     name: String,
     /// Seconds per encoder frame: subsampling_factor / sample_rate * hop_length
     time_ratio: f64,
@@ -99,12 +112,14 @@ impl ParakeetMlxEngine {
     ///
     /// Supported names:
     /// - `"parakeet-tdt-0.6b-v3"` (default MLX community model)
+    /// - `"parakeet-tdt-0.6b-v2"` (English-only MLX model)
     pub fn from_pretrained(name: &str) -> Result<Self> {
         let repo = match name {
             "parakeet-tdt-0.6b-v3" => HF_REPO,
+            "parakeet-tdt-0.6b-v2" => "mlx-community/parakeet-tdt-0.6b-v2",
             other => {
                 return Err(Error::ModelNotFound(format!(
-                    "unsupported parakeet-mlx model '{}', available: parakeet-tdt-0.6b-v3",
+                    "unsupported parakeet-mlx model '{}', available: parakeet-tdt-0.6b-v2, parakeet-tdt-0.6b-v3",
                     other
                 )));
             }
@@ -136,9 +151,10 @@ impl ParakeetMlxEngine {
     pub fn from_pretrained_cache_only(name: &str) -> Result<Self> {
         let repo = match name {
             "parakeet-tdt-0.6b-v3" => HF_REPO,
+            "parakeet-tdt-0.6b-v2" => "mlx-community/parakeet-tdt-0.6b-v2",
             other => {
                 return Err(Error::ModelNotFound(format!(
-                    "unsupported parakeet-mlx model '{}', available: parakeet-tdt-0.6b-v3",
+                    "unsupported parakeet-mlx model '{}', available: parakeet-tdt-0.6b-v2, parakeet-tdt-0.6b-v3",
                     other
                 )));
             }
@@ -256,6 +272,26 @@ impl ParakeetMlxEngine {
 
         encoder.load_weights(&weights, "encoder");
 
+        // --- Derive the per-model vocab/blank dimensions from the LOADED joint
+        // output projection, not from the v3 default constants. `load_weights`
+        // replaced `out_proj.weight` with the model's own tensor, whose first
+        // dim is num_classes = vocab_size + 1 (blank) + durations. The v2
+        // (English) model has 1024 tokens, v3 (multilingual) has 8192; using
+        // the v3 constant on a v2 model makes the duration-head slice empty and
+        // crashes greedy decode with "argmax reduce zero size array".
+        let num_classes = joint.out_proj.weight.as_ref().shape()[0] as usize;
+        let n_durations = DURATIONS.len();
+        if num_classes <= n_durations + 1 {
+            return Err(Error::Other(format!(
+                "joint output projection has {num_classes} classes, too few for {n_durations} durations + blank"
+            )));
+        }
+        let blank_id = num_classes - n_durations - 1; // = vocab_size
+        tracing::info!(
+            "derived model dims: num_classes={num_classes}, n_durations={n_durations}, blank_id(vocab_size)={blank_id}, vocab.txt tokens={}",
+            vocab.len()
+        );
+
         let mel_config = MelConfig::default();
         let time_ratio = SUBSAMPLING_FACTOR as f64 / mel_config.sample_rate as f64
             * mel_config.hop_length as f64;
@@ -267,6 +303,7 @@ impl ParakeetMlxEngine {
             mel_config,
             vocab,
             durations: DURATIONS.to_vec(),
+            blank_id,
             name: name.to_string(),
             time_ratio,
         })
@@ -334,7 +371,7 @@ impl Engine for ParakeetMlxEngine {
             &mut self.joint,
             &self.vocab,
             &self.durations,
-            BLANK_ID,
+            self.blank_id,
             self.time_ratio,
             biaser.as_ref(),
         )
@@ -499,10 +536,20 @@ mod tests {
 
     #[test]
     fn test_constants() {
-        // Sanity-check model constants
-        assert_eq!(BLANK_ID, 8192);
+        // Allocation defaults match the v3 model; real per-model dims are
+        // derived from the loaded weights in `from_dir`.
         assert_eq!(DURATIONS.len(), 5);
-        assert_eq!(NUM_CLASSES, 8198); // 8192 + 1 + 5
+        assert_eq!(NUM_CLASSES, 8198); // 8192 + 1 + 5 (v3 allocation default)
+    }
+
+    #[test]
+    fn test_blank_id_derivation() {
+        // blank_id = num_classes - durations - 1 = vocab_size, per model.
+        let n_durations = DURATIONS.len();
+        // v3: 8198 joint classes -> 8192 vocab / blank
+        assert_eq!(8198 - n_durations - 1, 8192);
+        // v2 (English): 1030 joint classes -> 1024 vocab / blank
+        assert_eq!(1030 - n_durations - 1, 1024);
     }
 
     #[test]
