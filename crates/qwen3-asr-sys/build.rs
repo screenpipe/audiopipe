@@ -13,6 +13,7 @@
 //! | Variable | Effect |
 //! |----------|--------|
 //! | `GGML_CPU_ONLY=1` | Skip all GPU backends (fast CI builds) |
+//! | `GGML_NATIVE=ON/OFF` | Override GGML host-specific CPU tuning |
 //! | `VULKAN_SDK=/path` | Use this Vulkan SDK (skip auto-detect/download) |
 //! | `CUDA_PATH=/path` | Use this CUDA toolkit (skip auto-detect/download) |
 //! | `GGML_NO_DOWNLOAD=1` | Never download SDKs; fail with install instructions |
@@ -34,6 +35,8 @@ fn main() {
 
     let cpu_only = env_flag("GGML_CPU_ONLY");
     let no_download = env_flag("GGML_NO_DOWNLOAD");
+    let ggml_native = std::env::var("GGML_NATIVE").ok();
+    println!("cargo:rerun-if-env-changed=GGML_NATIVE");
 
     // ── 0. Detect / download GPU backends ─────────────────────────────────
     let use_metal = if cpu_only { false } else { resolve_metal(&target_os) };
@@ -106,6 +109,14 @@ fn main() {
         .define("GGML_BUILD_TESTS", "OFF")
         .define("GGML_BUILD_EXAMPLES", "OFF")
         .define("GGML_OPENMP", "OFF");
+
+    if let Some(ref native) = ggml_native {
+        ggml_cfg.define("GGML_NATIVE", native);
+    } else if target_os == "macos" && target_arch == "aarch64" {
+        // Apple Clang rejects GGML's `-mcpu=native` fallback when Cargo builds
+        // explicitly for aarch64. Keep output portable across Apple Silicon.
+        ggml_cfg.define("GGML_NATIVE", "OFF");
+    }
 
     // GGML uses std::filesystem::path which requires macOS 10.15+
     if target_os == "macos" {
