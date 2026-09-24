@@ -41,21 +41,19 @@ fn build_session(onnx_path: &Path, cache_dir: Option<&Path>) -> Result<ort::sess
     {
         // Try MLProgram first (more ops on ANE), fall back to NeuralNetwork
         for format in &[
-            ort::execution_providers::coreml::CoreMLModelFormat::MLProgram,
-            ort::execution_providers::coreml::CoreMLModelFormat::NeuralNetwork,
+            ort::execution_providers::coreml::ModelFormat::MLProgram,
+            ort::execution_providers::coreml::ModelFormat::NeuralNetwork,
         ] {
             let format_name = match format {
-                ort::execution_providers::coreml::CoreMLModelFormat::MLProgram => "MLProgram",
-                ort::execution_providers::coreml::CoreMLModelFormat::NeuralNetwork => {
-                    "NeuralNetwork"
-                }
+                ort::execution_providers::coreml::ModelFormat::MLProgram => "MLProgram",
+                ort::execution_providers::coreml::ModelFormat::NeuralNetwork => "NeuralNetwork",
             };
 
             let mut ep = ort::execution_providers::CoreMLExecutionProvider::default()
                 .with_model_format(*format)
-                .with_compute_units(ort::execution_providers::coreml::CoreMLComputeUnits::All)
+                .with_compute_units(ort::execution_providers::coreml::ComputeUnits::All)
                 .with_specialization_strategy(
-                    ort::execution_providers::coreml::CoreMLSpecializationStrategy::FastPrediction,
+                    ort::execution_providers::coreml::SpecializationStrategy::FastPrediction,
                 )
                 .with_low_precision_accumulation_on_gpu(true);
 
