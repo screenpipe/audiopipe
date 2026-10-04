@@ -11,7 +11,17 @@ categories = ["multimedia::audio", "science"]
 [dependencies]
 ort = { version = "=2.0.0-rc.12", default-features = false, features = ["ndarray", "half"], optional = true }
 ort-sys = { version = "=2.0.0-rc.12", default-features = false, optional = true }
-hf-hub = "0.4"
+# default-features disabled + native-tls explicitly requested so Cargo's
+# workspace-wide feature unification can't silently flip this crate onto
+# rustls-tls (which only trusts the baked-in webpki-roots bundle and
+# ignores the OS cert store). native-tls honors custom root CAs installed
+# by corporate IT (e.g. TLS-intercepting proxies) via the Windows
+# Trusted Root store / macOS Keychain. Without this, hf_hub::api::sync::Api
+# downloads in src/parakeet.rs can fail with:
+#   tls connection init failed: invalid peer certificate: UnknownIssuer
+# Mirrors the explicit pin in screenpipe/screenpipe's workspace Cargo.toml
+# (see screenpipe/screenpipe#3694).
+hf-hub = { version = "0.4", default-features = false, features = ["tokio", "ureq", "native-tls"] }
 ndarray = { version = "0.17", optional = true }
 realfft = { version = "3", optional = true }
 thiserror = "2"
