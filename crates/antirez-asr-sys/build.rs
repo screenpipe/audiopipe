@@ -38,6 +38,11 @@ fn main() {
     } else {
         build.file(src.join("qwen_asr_audio.c"));
         build.flag("-std=c11");
+        // Strict C11 hides POSIX declarations such as strdup in glibc, and GCC 14+
+        // rejects the implicit declaration (seen with the GCC of Fedora 44).
+        if std::env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("linux") {
+            build.define("_GNU_SOURCE", None);
+        }
     }
 
     let use_openblas = std::env::var("CARGO_FEATURE_OPENBLAS").is_ok();
