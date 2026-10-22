@@ -8,9 +8,9 @@ One excluded warm-up per clip and three measured repetitions per clip.
 | Measurement | Bark 3.0 | Parakeet TDT 0.6B v3 |
 | --- | ---: | ---: |
 | Audio duration, seconds | 170.52 | 170.52 |
-| Sum of per-clip median inference times, seconds | 1.670 | 1.282 |
+| Sum of per-clip median inference times, seconds | 1.274 | 1.227 |
 | Diagnostic WER | 18.02% | 15.31% |
-| Model load, seconds | 6.83 | 0.47 |
+| Model load, seconds | 6.67 | 0.43 |
 
 All five final transcripts for each model exactly match their respective earlier
 Screenpipe benchmark transcripts. This confirms the port preserves these outputs;

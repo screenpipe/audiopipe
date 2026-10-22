@@ -340,7 +340,6 @@ impl Model {
             #[cfg(feature = "parakeet-mlx")]
             n if n.contains("mlx") && n.starts_with("parakeet") => {
                 let base_name = n.replace("-mlx", "");
-                let _guard = GPU_LOCK.lock().unwrap_or_else(|e| e.into_inner());
                 let engine = crate::parakeet_mlx::ParakeetMlxEngine::from_pretrained(&base_name)?;
                 Ok(Self { inner: Box::new(engine), uses_gpu: true })
             }
@@ -404,7 +403,6 @@ impl Model {
             #[cfg(feature = "parakeet-mlx")]
             n if n.contains("mlx") && n.starts_with("parakeet") => {
                 let base_name = n.replace("-mlx", "");
-                let _guard = GPU_LOCK.lock().unwrap_or_else(|e| e.into_inner());
                 let engine =
                     crate::parakeet_mlx::ParakeetMlxEngine::from_pretrained_cache_only(&base_name)?;
                 Ok(Self { inner: Box::new(engine), uses_gpu: true })
