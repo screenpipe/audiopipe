@@ -42,6 +42,9 @@ pub mod qwen3_asr_antirez;
 #[cfg(feature = "parakeet-mlx")]
 pub mod parakeet_mlx;
 
+#[cfg(feature = "bark")]
+pub mod bark;
+
 pub use error::Error;
 pub use model::{
     Model, ParakeetExecutionProvider, PretrainedDownloadStatus, Qwen3ExecutionProvider, Segment,

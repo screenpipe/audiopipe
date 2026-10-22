@@ -17,7 +17,7 @@ use std::sync::{Arc, Condvar, Mutex, OnceLock};
 /// This lock ensures only ONE GPU transcription runs at any time across the entire
 /// process, regardless of which Model instance or thread initiates it.
 /// ONNX (CoreML/DirectML/CPU) and cloud API engines are NOT affected.
-static GPU_LOCK: Mutex<()> = Mutex::new(());
+pub(crate) static GPU_LOCK: Mutex<()> = Mutex::new(());
 
 /// Result of asking audiopipe to start a background model download.
 ///
@@ -320,6 +320,7 @@ impl Model {
     /// Load a model by name. Downloads from HuggingFace if not cached.
     ///
     /// Supported models:
+    /// - `"bark-3.0-mlx"` — Underdog Bark 3.0 (English, native MLX)
     /// - `"parakeet-tdt-0.6b-v2"` — NVIDIA Parakeet TDT (English, 0.6B)
     /// - `"parakeet-tdt-0.6b-v3"` — NVIDIA Parakeet TDT (25 languages, 0.6B)
     /// - `"whisper-large-v3-turbo"` — OpenAI Whisper large-v3-turbo
@@ -331,9 +332,15 @@ impl Model {
                 inner: Box::new(TestPretrainedEngine::from_pretrained()),
                 uses_gpu: false,
             }),
+            #[cfg(feature = "bark-mlx")]
+            crate::bark::MODEL_NAME => {
+                let engine = crate::bark::BarkEngine::from_pretrained()?;
+                Ok(Self { inner: Box::new(engine), uses_gpu: true })
+            }
             #[cfg(feature = "parakeet-mlx")]
             n if n.contains("mlx") && n.starts_with("parakeet") => {
                 let base_name = n.replace("-mlx", "");
+                let _guard = GPU_LOCK.lock().unwrap_or_else(|e| e.into_inner());
                 let engine = crate::parakeet_mlx::ParakeetMlxEngine::from_pretrained(&base_name)?;
                 Ok(Self { inner: Box::new(engine), uses_gpu: true })
             }
@@ -389,9 +396,15 @@ impl Model {
         provider: ParakeetExecutionProvider,
     ) -> Result<Self> {
         match name {
+            #[cfg(feature = "bark-mlx")]
+            crate::bark::MODEL_NAME => {
+                let engine = crate::bark::BarkEngine::from_pretrained_cache_only()?;
+                Ok(Self { inner: Box::new(engine), uses_gpu: true })
+            }
             #[cfg(feature = "parakeet-mlx")]
             n if n.contains("mlx") && n.starts_with("parakeet") => {
                 let base_name = n.replace("-mlx", "");
+                let _guard = GPU_LOCK.lock().unwrap_or_else(|e| e.into_inner());
                 let engine =
                     crate::parakeet_mlx::ParakeetMlxEngine::from_pretrained_cache_only(&base_name)?;
                 Ok(Self { inner: Box::new(engine), uses_gpu: true })
@@ -459,6 +472,9 @@ impl Model {
         match name {
             #[cfg(test)]
             TEST_PRETRAINED_MODEL => TestPretrainedEngine::download_pretrained(),
+            #[cfg(feature = "bark-mlx")]
+            crate::bark::MODEL_NAME => crate::bark::download()
+                .map(drop).map_err(|e| Error::Download(format!("{e:#}"))),
             #[cfg(feature = "parakeet-mlx")]
             n if n.contains("mlx") && n.starts_with("parakeet") => {
                 let base_name = n.replace("-mlx", "");
@@ -504,9 +520,14 @@ impl Model {
         pretrained_downloads().spawn_model(&name, move || Self::download_pretrained(&download_name))
     }
 
-    /// Load a model from a local directory containing ONNX files.
+    /// Load a model from a local directory containing the selected engine artifacts.
     pub fn from_dir(path: &std::path::Path, engine_type: &str) -> Result<Self> {
         match engine_type {
+            #[cfg(feature = "bark-mlx")]
+            "bark-mlx" => Ok(Self {
+                inner: Box::new(crate::bark::BarkEngine::from_dir(path)?),
+                uses_gpu: true,
+            }),
             #[cfg(feature = "parakeet")]
             "parakeet" => {
                 let engine = crate::parakeet::ParakeetEngine::from_dir(path)?;

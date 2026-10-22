@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-22",
+  "hardware": "Apple M5 Max",
+  "physical_cpu_cores": 18,
+  "memory_gib": 128,
+  "macos": "26.6.2",
+  "backend": "MLX Metal, with upstream fence compatibility backport in generated dependency",
+  "mlx_cpp_version": "0.25.1",
+  "mlx_rs_version": "0.25.3",
+  "audiopipe_revision": "b099a2e589d0dc4d8f22e3e8351efea9e1a359ac",
+  "bark_revision": "85db2ad18ab41e534a222ee253c29191d77ed919",
+  "parakeet_cache_revision": "ed2b7e8c15f9aaa0b5772e2efb986255eaef7e15",
+  "repetitions_per_clip": 3,
+  "excluded_warmups_per_clip": 1,
+  "weight_dtype": "f32 for both models",
+  "cache_limit_bytes": 2147483648,
+  "bark_model_download_bytes": 163398645,
+  "parakeet_model_download_bytes": 2508288736,
+  "source_sha256": {
+    "src/bark/engine.rs": "a0135da88097c914324cd52ae61e226f86b1d9380de045d92228ce04e2c4862a",
+    "src/bark/weights.rs": "5caf77134cf856ae35cd91ab29c0100ac1e370df506a4ac8cdf80be554f88dde",
+    "src/bark/mod.rs": "3a14ba778ef7f9b0750afed353e093fe7f4aa9c76b87488f083c928e88c2abcb",
+    "src/model.rs": "861d3a60713332d6afadb7850c277abdb6fab180e6dbc4c2a2fca5bb9b2264d8",
+    "examples/bark_parakeet_bench.rs": "5df2d509d1f641230d085f918a704481b3c92355c938e51a4e3546c1b93dd4a2",
+    "bench/bark/fixtures.json": "bd6655481693f13a3a2f90f3344546c98c0e22796fb35a7fa3333999b03ee2bb"
+  },
+  "limitations": [
+    "Shared workstation; no CPU/GPU isolation or exclusive machine reservation.",
+    "Small legacy fixture set, with imperfect references and no number/URL canonicalization.",
+    "One process per model; load measurements include process-local MLX initialization.",
+    "Unmodified MLX 0.25.1 does not compile with this Xcode 27 toolchain; the benchmark backports the cited upstream fence fix. No production dependency upgrade is included.",
+    "Full library tests crashed under default parallel execution; all 36 library tests passed with --test-threads=1."
+  ],
+  "xcode": "27.1 (27A9275)",
+  "metal_toolchain": "27A266a; Apple metal 32023.921",
+  "mlx_upstream_backport": "https://github.com/ml-explore/mlx/commit/47430159fc5f82392bcc69d41fce2ee89fc2b662",
+  "patched_fence_sha256": "6d3f3c27dd038a0f731054f7466f951b02134ce4124b1c1bbbdabfd9498d1913",
+  "source_repository": "https://github.com/screenpipe/audiopipe",
+  "audiopipe_base_revision": "d2954e8ee77f18551fbd5119b0411ca7bf861cd6",
+  "rustc": "1.88.0",
+  "api": "audiopipe::Model::from_pretrained_cache_only, Model::transcribe",
+  "selected_device": "Device(gpu, 0)"
+}
