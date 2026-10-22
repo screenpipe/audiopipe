@@ -1,0 +1,19 @@
+{
+  "backend": "native Rust / ONNX Runtime",
+  "cases": [
+    {
+      "audio_seconds": 13.7404375,
+      "median_seconds": 0.694621042,
+      "name": "accuracy3",
+      "reference": "again, screenpipe allows you to get meeting summaries, locally, without leaking data to openai, with any apps, like whatsapp, meet, zoom, etc. and it's open source at github.com/screenpipe/screenpipe",
+      "seconds": [
+        0.694621042
+      ],
+      "transcript": "Again, ScreenPipe allows you to get meeting summaries locally without leaking data to open AI with any apps like WhatsApp, Meet, Zoom, etc., and its open source at GitHub.com Meteor AI Screenpipe."
+    }
+  ],
+  "execution_provider": "CPU",
+  "load_seconds": 8.676303791,
+  "model": "bark-3.0",
+  "requested_provider": "directml-or-cpu"
+}

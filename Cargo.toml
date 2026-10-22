@@ -37,6 +37,9 @@ hound = "3"
 tracing-subscriber = "0.3"
 dirs = "6"
 libc = "0.2"
+onnx-protobuf = "0.2.3"
+# Must match the version used to generate onnx-protobuf sources.
+protobuf = "=3.4.0"
 
 [[example]]
 name = "transcribe"
@@ -85,6 +88,7 @@ qwen3-asr-antirez-blas = ["qwen3-asr-antirez", "antirez-asr-sys/openblas"]
 parakeet-mlx = ["dep:mlx-rs", "dep:safetensors", "dep:half"]
 bark = ["dep:anyhow", "dep:constriction", "dep:lzma-rs", "dep:sha2", "dep:half"]
 bark-mlx = ["bark", "parakeet-mlx"]
+bark-onnx = ["bark", "parakeet"]
 all-models = ["whisper", "parakeet", "qwen3-asr"]
 
 # GGML GPU backends
@@ -99,3 +103,15 @@ required-features = ["bark-mlx"]
 [[example]]
 name = "bark_weight_digests"
 required-features = ["bark"]
+
+[[example]]
+name = "prepare_bark_onnx"
+required-features = ["bark"]
+
+[[example]]
+name = "bark_onnx_bench"
+required-features = ["bark-onnx"]
+
+[[example]]
+name = "download_bark"
+required-features = ["bark-onnx"]

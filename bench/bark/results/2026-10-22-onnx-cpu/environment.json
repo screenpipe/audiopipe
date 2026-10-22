@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-22",
+  "hardware": "Apple M5 Max, 128 GiB",
+  "backend": "native Rust / ONNX Runtime CPU",
+  "cpu_intra_op_threads": 2,
+  "cpu_inter_op_threads": 1,
+  "repetitions_per_clip": 3,
+  "excluded_warmups_per_clip": 1,
+  "model_revision": "85db2ad18ab41e534a222ee253c29191d77ed919",
+  "interpretation": "CPU correctness and timing; not Windows or GPU evidence. Native Windows receipt is separate.",
+  "source_sha256": {
+    "src/bark/engine.rs": "a0135da88097c914324cd52ae61e226f86b1d9380de045d92228ce04e2c4862a",
+    "src/bark/mod.rs": "c7525e1df6b5876481f43eccc12ea6d1dc5d09e9bc3527dde5f3b2883a6e0754",
+    "src/bark/onnx/bindings.json": "24d2f6d03375a9748858363dee5762a00a97df1be6a42d664df7ddc866dab88c",
+    "src/bark/onnx/decoder.onnx": "aac3a61ffc9bd21c661b6923c3d15027040c4ceaaabb581cf90b072971a57d53",
+    "src/bark/onnx/encoder.onnx": "09c2cce2b71ab05d5592b13e4865e05c7496c9bb7eaad5ed2bec15a714342dc6",
+    "src/bark/onnx/provenance.json": "83ad44803aae2632853d3c4c81fb4910e0318383c3ffee9ccef2179844b9be05",
+    "src/bark/onnx.rs": "f90a4be274b9961241fa98323bc30ae1cf1a69e4d88c12b49280b47f3c0920e4",
+    "src/bark/onnx_frontend.rs": "be972ce11ecef91014c00ef2a1c91cfe24ac223dd68ad9281818aa7a25f1f6d5",
+    "src/bark/onnx_weights.rs": "f02deb850791e7ac33049c20975e4e3fa784e6b1b91e7d5f6a9c59f3dfa6f920",
+    "src/bark/weights.rs": "5caf77134cf856ae35cd91ab29c0100ac1e370df506a4ac8cdf80be554f88dde"
+  },
+  "model_api_sha256": "63b950aabe9f75e6c1cb370cd5bf1e68ba09284a1400066a2495e9b489562636"
+}

@@ -1,0 +1,9 @@
+{
+  "generator": "transformers.ParakeetFeatureExtractor",
+  "transformers": "5.19.0",
+  "torch": "2.8.0",
+  "waveform": "5600 samples; zeros before sample 4000, then ((i % 97) - 48) / 64",
+  "real_frames": 35,
+  "layout": "128 mel channels x 35 time frames, little endian f32",
+  "sha256": "3ca1c0cb758bbe2db178663e58a82a0d1242e470b28eb42eeb5f9e41dfb440fa"
+}
