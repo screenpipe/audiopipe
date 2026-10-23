@@ -15,7 +15,12 @@ function Run-Native([string] $Name, [string] $Program, [string[]] $Arguments, [b
   $exe = (Get-Command $Program -ErrorAction Stop).Source
   $out = Join-Path $ResultDir "$Name.stdout.log"
   $err = Join-Path $ResultDir "$Name.stderr.log"
-  $p = Start-Process -FilePath $exe -ArgumentList $Arguments -WorkingDirectory $repo -RedirectStandardOutput $out -RedirectStandardError $err -PassThru -Wait -NoNewWindow
+  # Start-Process -Wait follows the launched process tree on Windows. Cargo can
+  # leave unrelated descendants holding inherited handles, which makes the
+  # validator hang even after cargo and its test binaries have exited. Wait on
+  # the native process itself so its exit code remains authoritative.
+  $p = Start-Process -FilePath $exe -ArgumentList $Arguments -WorkingDirectory $repo -RedirectStandardOutput $out -RedirectStandardError $err -PassThru -NoNewWindow
+  $p.WaitForExit()
   $script:result.stages += [ordered]@{ name = $Name; exitCode = $p.ExitCode; stdout = [IO.Path]::GetFileName($out); stderr = [IO.Path]::GetFileName($err) }
   if ($p.ExitCode -ne 0 -and -not $AllowFailure) { throw "$Name failed with native exit code $($p.ExitCode)" }
   return [int] $p.ExitCode
