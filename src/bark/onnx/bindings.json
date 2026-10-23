@@ -1,0 +1,7448 @@
+[
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.subsampling.linear.bias"
+    ],
+    "target": "pre_encode.out.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      256,
+      1,
+      3,
+      3
+    ],
+    "sources": [
+      "encoder.subsampling.layers.0.weight"
+    ],
+    "target": "pre_encode.conv.0.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      256
+    ],
+    "sources": [
+      "encoder.subsampling.layers.0.bias"
+    ],
+    "target": "pre_encode.conv.0.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      256,
+      1,
+      3,
+      3
+    ],
+    "sources": [
+      "encoder.subsampling.layers.2.weight"
+    ],
+    "target": "pre_encode.conv.2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      256
+    ],
+    "sources": [
+      "encoder.subsampling.layers.2.bias"
+    ],
+    "target": "pre_encode.conv.2.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      256,
+      256,
+      1,
+      1
+    ],
+    "sources": [
+      "encoder.subsampling.layers.3.weight"
+    ],
+    "target": "pre_encode.conv.3.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      256
+    ],
+    "sources": [
+      "encoder.subsampling.layers.3.bias"
+    ],
+    "target": "pre_encode.conv.3.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      256,
+      1,
+      3,
+      3
+    ],
+    "sources": [
+      "encoder.subsampling.layers.5.weight"
+    ],
+    "target": "pre_encode.conv.5.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      256
+    ],
+    "sources": [
+      "encoder.subsampling.layers.5.bias"
+    ],
+    "target": "pre_encode.conv.5.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      256,
+      256,
+      1,
+      1
+    ],
+    "sources": [
+      "encoder.subsampling.layers.6.weight"
+    ],
+    "target": "pre_encode.conv.6.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      256
+    ],
+    "sources": [
+      "encoder.subsampling.layers.6.bias"
+    ],
+    "target": "pre_encode.conv.6.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.0.norm_feed_forward1.weight"
+    ],
+    "target": "layers.0.norm_feed_forward1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.0.norm_feed_forward1.bias"
+    ],
+    "target": "layers.0.norm_feed_forward1.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.0.norm_conv.weight"
+    ],
+    "target": "layers.0.norm_conv.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.0.norm_conv.bias"
+    ],
+    "target": "layers.0.norm_conv.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      2048,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.0.conv.pointwise_conv1.weight"
+    ],
+    "target": "layers.0.conv.pointwise_conv1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.0.conv.pointwise_conv2.weight"
+    ],
+    "target": "layers.0.conv.pointwise_conv2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.0.norm_self_att.weight"
+    ],
+    "target": "layers.0.norm_self_att.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.0.norm_self_att.bias"
+    ],
+    "target": "layers.0.norm_self_att.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.0.self_attn.bias_u"
+    ],
+    "target": "layers.0.self_attn.pos_bias_u",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.0.self_attn.bias_v"
+    ],
+    "target": "layers.0.self_attn.pos_bias_v",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.0.norm_feed_forward2.weight"
+    ],
+    "target": "layers.0.norm_feed_forward2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.0.norm_feed_forward2.bias"
+    ],
+    "target": "layers.0.norm_feed_forward2.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.0.norm_out.weight"
+    ],
+    "target": "layers.0.norm_out.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.0.norm_out.bias"
+    ],
+    "target": "layers.0.norm_out.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.1.norm_feed_forward1.weight"
+    ],
+    "target": "layers.1.norm_feed_forward1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.1.norm_feed_forward1.bias"
+    ],
+    "target": "layers.1.norm_feed_forward1.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.1.norm_conv.weight"
+    ],
+    "target": "layers.1.norm_conv.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.1.norm_conv.bias"
+    ],
+    "target": "layers.1.norm_conv.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      2048,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.1.conv.pointwise_conv1.weight"
+    ],
+    "target": "layers.1.conv.pointwise_conv1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.1.conv.pointwise_conv2.weight"
+    ],
+    "target": "layers.1.conv.pointwise_conv2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.1.norm_self_att.weight"
+    ],
+    "target": "layers.1.norm_self_att.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.1.norm_self_att.bias"
+    ],
+    "target": "layers.1.norm_self_att.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.1.self_attn.bias_u"
+    ],
+    "target": "layers.1.self_attn.pos_bias_u",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.1.self_attn.bias_v"
+    ],
+    "target": "layers.1.self_attn.pos_bias_v",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.1.norm_feed_forward2.weight"
+    ],
+    "target": "layers.1.norm_feed_forward2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.1.norm_feed_forward2.bias"
+    ],
+    "target": "layers.1.norm_feed_forward2.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.1.norm_out.weight"
+    ],
+    "target": "layers.1.norm_out.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.1.norm_out.bias"
+    ],
+    "target": "layers.1.norm_out.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.2.norm_feed_forward1.weight"
+    ],
+    "target": "layers.2.norm_feed_forward1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.2.norm_feed_forward1.bias"
+    ],
+    "target": "layers.2.norm_feed_forward1.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.2.norm_conv.weight"
+    ],
+    "target": "layers.2.norm_conv.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.2.norm_conv.bias"
+    ],
+    "target": "layers.2.norm_conv.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      2048,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.2.conv.pointwise_conv1.weight"
+    ],
+    "target": "layers.2.conv.pointwise_conv1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.2.conv.pointwise_conv2.weight"
+    ],
+    "target": "layers.2.conv.pointwise_conv2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.2.norm_self_att.weight"
+    ],
+    "target": "layers.2.norm_self_att.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.2.norm_self_att.bias"
+    ],
+    "target": "layers.2.norm_self_att.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.2.self_attn.bias_u"
+    ],
+    "target": "layers.2.self_attn.pos_bias_u",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.2.self_attn.bias_v"
+    ],
+    "target": "layers.2.self_attn.pos_bias_v",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.2.norm_feed_forward2.weight"
+    ],
+    "target": "layers.2.norm_feed_forward2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.2.norm_feed_forward2.bias"
+    ],
+    "target": "layers.2.norm_feed_forward2.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.2.norm_out.weight"
+    ],
+    "target": "layers.2.norm_out.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.2.norm_out.bias"
+    ],
+    "target": "layers.2.norm_out.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.3.norm_feed_forward1.weight"
+    ],
+    "target": "layers.3.norm_feed_forward1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.3.norm_feed_forward1.bias"
+    ],
+    "target": "layers.3.norm_feed_forward1.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.3.norm_conv.weight"
+    ],
+    "target": "layers.3.norm_conv.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.3.norm_conv.bias"
+    ],
+    "target": "layers.3.norm_conv.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      2048,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.3.conv.pointwise_conv1.weight"
+    ],
+    "target": "layers.3.conv.pointwise_conv1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.3.conv.pointwise_conv2.weight"
+    ],
+    "target": "layers.3.conv.pointwise_conv2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.3.norm_self_att.weight"
+    ],
+    "target": "layers.3.norm_self_att.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.3.norm_self_att.bias"
+    ],
+    "target": "layers.3.norm_self_att.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.3.self_attn.bias_u"
+    ],
+    "target": "layers.3.self_attn.pos_bias_u",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.3.self_attn.bias_v"
+    ],
+    "target": "layers.3.self_attn.pos_bias_v",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.3.norm_feed_forward2.weight"
+    ],
+    "target": "layers.3.norm_feed_forward2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.3.norm_feed_forward2.bias"
+    ],
+    "target": "layers.3.norm_feed_forward2.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.3.norm_out.weight"
+    ],
+    "target": "layers.3.norm_out.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.3.norm_out.bias"
+    ],
+    "target": "layers.3.norm_out.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.4.norm_feed_forward1.weight"
+    ],
+    "target": "layers.4.norm_feed_forward1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.4.norm_feed_forward1.bias"
+    ],
+    "target": "layers.4.norm_feed_forward1.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.4.norm_conv.weight"
+    ],
+    "target": "layers.4.norm_conv.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.4.norm_conv.bias"
+    ],
+    "target": "layers.4.norm_conv.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      2048,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.4.conv.pointwise_conv1.weight"
+    ],
+    "target": "layers.4.conv.pointwise_conv1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.4.conv.pointwise_conv2.weight"
+    ],
+    "target": "layers.4.conv.pointwise_conv2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.4.norm_self_att.weight"
+    ],
+    "target": "layers.4.norm_self_att.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.4.norm_self_att.bias"
+    ],
+    "target": "layers.4.norm_self_att.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.4.self_attn.bias_u"
+    ],
+    "target": "layers.4.self_attn.pos_bias_u",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.4.self_attn.bias_v"
+    ],
+    "target": "layers.4.self_attn.pos_bias_v",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.4.norm_feed_forward2.weight"
+    ],
+    "target": "layers.4.norm_feed_forward2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.4.norm_feed_forward2.bias"
+    ],
+    "target": "layers.4.norm_feed_forward2.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.4.norm_out.weight"
+    ],
+    "target": "layers.4.norm_out.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.4.norm_out.bias"
+    ],
+    "target": "layers.4.norm_out.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.5.norm_feed_forward1.weight"
+    ],
+    "target": "layers.5.norm_feed_forward1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.5.norm_feed_forward1.bias"
+    ],
+    "target": "layers.5.norm_feed_forward1.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.5.norm_conv.weight"
+    ],
+    "target": "layers.5.norm_conv.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.5.norm_conv.bias"
+    ],
+    "target": "layers.5.norm_conv.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      2048,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.5.conv.pointwise_conv1.weight"
+    ],
+    "target": "layers.5.conv.pointwise_conv1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.5.conv.pointwise_conv2.weight"
+    ],
+    "target": "layers.5.conv.pointwise_conv2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.5.norm_self_att.weight"
+    ],
+    "target": "layers.5.norm_self_att.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.5.norm_self_att.bias"
+    ],
+    "target": "layers.5.norm_self_att.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.5.self_attn.bias_u"
+    ],
+    "target": "layers.5.self_attn.pos_bias_u",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.5.self_attn.bias_v"
+    ],
+    "target": "layers.5.self_attn.pos_bias_v",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.5.norm_feed_forward2.weight"
+    ],
+    "target": "layers.5.norm_feed_forward2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.5.norm_feed_forward2.bias"
+    ],
+    "target": "layers.5.norm_feed_forward2.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.5.norm_out.weight"
+    ],
+    "target": "layers.5.norm_out.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.5.norm_out.bias"
+    ],
+    "target": "layers.5.norm_out.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.6.norm_feed_forward1.weight"
+    ],
+    "target": "layers.6.norm_feed_forward1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.6.norm_feed_forward1.bias"
+    ],
+    "target": "layers.6.norm_feed_forward1.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.6.norm_conv.weight"
+    ],
+    "target": "layers.6.norm_conv.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.6.norm_conv.bias"
+    ],
+    "target": "layers.6.norm_conv.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      2048,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.6.conv.pointwise_conv1.weight"
+    ],
+    "target": "layers.6.conv.pointwise_conv1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.6.conv.pointwise_conv2.weight"
+    ],
+    "target": "layers.6.conv.pointwise_conv2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.6.norm_self_att.weight"
+    ],
+    "target": "layers.6.norm_self_att.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.6.norm_self_att.bias"
+    ],
+    "target": "layers.6.norm_self_att.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.6.self_attn.bias_u"
+    ],
+    "target": "layers.6.self_attn.pos_bias_u",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.6.self_attn.bias_v"
+    ],
+    "target": "layers.6.self_attn.pos_bias_v",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.6.norm_feed_forward2.weight"
+    ],
+    "target": "layers.6.norm_feed_forward2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.6.norm_feed_forward2.bias"
+    ],
+    "target": "layers.6.norm_feed_forward2.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.6.norm_out.weight"
+    ],
+    "target": "layers.6.norm_out.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.6.norm_out.bias"
+    ],
+    "target": "layers.6.norm_out.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.7.norm_feed_forward1.weight"
+    ],
+    "target": "layers.7.norm_feed_forward1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.7.norm_feed_forward1.bias"
+    ],
+    "target": "layers.7.norm_feed_forward1.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.7.norm_conv.weight"
+    ],
+    "target": "layers.7.norm_conv.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.7.norm_conv.bias"
+    ],
+    "target": "layers.7.norm_conv.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      2048,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.7.conv.pointwise_conv1.weight"
+    ],
+    "target": "layers.7.conv.pointwise_conv1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.7.conv.pointwise_conv2.weight"
+    ],
+    "target": "layers.7.conv.pointwise_conv2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.7.norm_self_att.weight"
+    ],
+    "target": "layers.7.norm_self_att.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.7.norm_self_att.bias"
+    ],
+    "target": "layers.7.norm_self_att.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.7.self_attn.bias_u"
+    ],
+    "target": "layers.7.self_attn.pos_bias_u",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.7.self_attn.bias_v"
+    ],
+    "target": "layers.7.self_attn.pos_bias_v",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.7.norm_feed_forward2.weight"
+    ],
+    "target": "layers.7.norm_feed_forward2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.7.norm_feed_forward2.bias"
+    ],
+    "target": "layers.7.norm_feed_forward2.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.7.norm_out.weight"
+    ],
+    "target": "layers.7.norm_out.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.7.norm_out.bias"
+    ],
+    "target": "layers.7.norm_out.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.8.norm_feed_forward1.weight"
+    ],
+    "target": "layers.8.norm_feed_forward1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.8.norm_feed_forward1.bias"
+    ],
+    "target": "layers.8.norm_feed_forward1.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.8.norm_conv.weight"
+    ],
+    "target": "layers.8.norm_conv.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.8.norm_conv.bias"
+    ],
+    "target": "layers.8.norm_conv.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      2048,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.8.conv.pointwise_conv1.weight"
+    ],
+    "target": "layers.8.conv.pointwise_conv1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.8.conv.pointwise_conv2.weight"
+    ],
+    "target": "layers.8.conv.pointwise_conv2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.8.norm_self_att.weight"
+    ],
+    "target": "layers.8.norm_self_att.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.8.norm_self_att.bias"
+    ],
+    "target": "layers.8.norm_self_att.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.8.self_attn.bias_u"
+    ],
+    "target": "layers.8.self_attn.pos_bias_u",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.8.self_attn.bias_v"
+    ],
+    "target": "layers.8.self_attn.pos_bias_v",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.8.norm_feed_forward2.weight"
+    ],
+    "target": "layers.8.norm_feed_forward2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.8.norm_feed_forward2.bias"
+    ],
+    "target": "layers.8.norm_feed_forward2.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.8.norm_out.weight"
+    ],
+    "target": "layers.8.norm_out.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.8.norm_out.bias"
+    ],
+    "target": "layers.8.norm_out.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.9.norm_feed_forward1.weight"
+    ],
+    "target": "layers.9.norm_feed_forward1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.9.norm_feed_forward1.bias"
+    ],
+    "target": "layers.9.norm_feed_forward1.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.9.norm_conv.weight"
+    ],
+    "target": "layers.9.norm_conv.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.9.norm_conv.bias"
+    ],
+    "target": "layers.9.norm_conv.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      2048,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.9.conv.pointwise_conv1.weight"
+    ],
+    "target": "layers.9.conv.pointwise_conv1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.9.conv.pointwise_conv2.weight"
+    ],
+    "target": "layers.9.conv.pointwise_conv2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.9.norm_self_att.weight"
+    ],
+    "target": "layers.9.norm_self_att.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.9.norm_self_att.bias"
+    ],
+    "target": "layers.9.norm_self_att.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.9.self_attn.bias_u"
+    ],
+    "target": "layers.9.self_attn.pos_bias_u",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.9.self_attn.bias_v"
+    ],
+    "target": "layers.9.self_attn.pos_bias_v",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.9.norm_feed_forward2.weight"
+    ],
+    "target": "layers.9.norm_feed_forward2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.9.norm_feed_forward2.bias"
+    ],
+    "target": "layers.9.norm_feed_forward2.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.9.norm_out.weight"
+    ],
+    "target": "layers.9.norm_out.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.9.norm_out.bias"
+    ],
+    "target": "layers.9.norm_out.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.10.norm_feed_forward1.weight"
+    ],
+    "target": "layers.10.norm_feed_forward1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.10.norm_feed_forward1.bias"
+    ],
+    "target": "layers.10.norm_feed_forward1.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.10.norm_conv.weight"
+    ],
+    "target": "layers.10.norm_conv.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.10.norm_conv.bias"
+    ],
+    "target": "layers.10.norm_conv.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      2048,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.10.conv.pointwise_conv1.weight"
+    ],
+    "target": "layers.10.conv.pointwise_conv1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.10.conv.pointwise_conv2.weight"
+    ],
+    "target": "layers.10.conv.pointwise_conv2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.10.norm_self_att.weight"
+    ],
+    "target": "layers.10.norm_self_att.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.10.norm_self_att.bias"
+    ],
+    "target": "layers.10.norm_self_att.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.10.self_attn.bias_u"
+    ],
+    "target": "layers.10.self_attn.pos_bias_u",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.10.self_attn.bias_v"
+    ],
+    "target": "layers.10.self_attn.pos_bias_v",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.10.norm_feed_forward2.weight"
+    ],
+    "target": "layers.10.norm_feed_forward2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.10.norm_feed_forward2.bias"
+    ],
+    "target": "layers.10.norm_feed_forward2.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.10.norm_out.weight"
+    ],
+    "target": "layers.10.norm_out.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.10.norm_out.bias"
+    ],
+    "target": "layers.10.norm_out.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.11.norm_feed_forward1.weight"
+    ],
+    "target": "layers.11.norm_feed_forward1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.11.norm_feed_forward1.bias"
+    ],
+    "target": "layers.11.norm_feed_forward1.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.11.norm_conv.weight"
+    ],
+    "target": "layers.11.norm_conv.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.11.norm_conv.bias"
+    ],
+    "target": "layers.11.norm_conv.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      2048,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.11.conv.pointwise_conv1.weight"
+    ],
+    "target": "layers.11.conv.pointwise_conv1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.11.conv.pointwise_conv2.weight"
+    ],
+    "target": "layers.11.conv.pointwise_conv2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.11.norm_self_att.weight"
+    ],
+    "target": "layers.11.norm_self_att.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.11.norm_self_att.bias"
+    ],
+    "target": "layers.11.norm_self_att.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.11.self_attn.bias_u"
+    ],
+    "target": "layers.11.self_attn.pos_bias_u",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.11.self_attn.bias_v"
+    ],
+    "target": "layers.11.self_attn.pos_bias_v",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.11.norm_feed_forward2.weight"
+    ],
+    "target": "layers.11.norm_feed_forward2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.11.norm_feed_forward2.bias"
+    ],
+    "target": "layers.11.norm_feed_forward2.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.11.norm_out.weight"
+    ],
+    "target": "layers.11.norm_out.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.11.norm_out.bias"
+    ],
+    "target": "layers.11.norm_out.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.12.norm_feed_forward1.weight"
+    ],
+    "target": "layers.12.norm_feed_forward1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.12.norm_feed_forward1.bias"
+    ],
+    "target": "layers.12.norm_feed_forward1.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.12.norm_conv.weight"
+    ],
+    "target": "layers.12.norm_conv.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.12.norm_conv.bias"
+    ],
+    "target": "layers.12.norm_conv.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      2048,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.12.conv.pointwise_conv1.weight"
+    ],
+    "target": "layers.12.conv.pointwise_conv1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.12.conv.pointwise_conv2.weight"
+    ],
+    "target": "layers.12.conv.pointwise_conv2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.12.norm_self_att.weight"
+    ],
+    "target": "layers.12.norm_self_att.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.12.norm_self_att.bias"
+    ],
+    "target": "layers.12.norm_self_att.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.12.self_attn.bias_u"
+    ],
+    "target": "layers.12.self_attn.pos_bias_u",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.12.self_attn.bias_v"
+    ],
+    "target": "layers.12.self_attn.pos_bias_v",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.12.norm_feed_forward2.weight"
+    ],
+    "target": "layers.12.norm_feed_forward2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.12.norm_feed_forward2.bias"
+    ],
+    "target": "layers.12.norm_feed_forward2.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.12.norm_out.weight"
+    ],
+    "target": "layers.12.norm_out.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.12.norm_out.bias"
+    ],
+    "target": "layers.12.norm_out.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.13.norm_feed_forward1.weight"
+    ],
+    "target": "layers.13.norm_feed_forward1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.13.norm_feed_forward1.bias"
+    ],
+    "target": "layers.13.norm_feed_forward1.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.13.norm_conv.weight"
+    ],
+    "target": "layers.13.norm_conv.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.13.norm_conv.bias"
+    ],
+    "target": "layers.13.norm_conv.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      2048,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.13.conv.pointwise_conv1.weight"
+    ],
+    "target": "layers.13.conv.pointwise_conv1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.13.conv.pointwise_conv2.weight"
+    ],
+    "target": "layers.13.conv.pointwise_conv2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.13.norm_self_att.weight"
+    ],
+    "target": "layers.13.norm_self_att.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.13.norm_self_att.bias"
+    ],
+    "target": "layers.13.norm_self_att.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.13.self_attn.bias_u"
+    ],
+    "target": "layers.13.self_attn.pos_bias_u",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.13.self_attn.bias_v"
+    ],
+    "target": "layers.13.self_attn.pos_bias_v",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.13.norm_feed_forward2.weight"
+    ],
+    "target": "layers.13.norm_feed_forward2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.13.norm_feed_forward2.bias"
+    ],
+    "target": "layers.13.norm_feed_forward2.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.13.norm_out.weight"
+    ],
+    "target": "layers.13.norm_out.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.13.norm_out.bias"
+    ],
+    "target": "layers.13.norm_out.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.14.norm_feed_forward1.weight"
+    ],
+    "target": "layers.14.norm_feed_forward1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.14.norm_feed_forward1.bias"
+    ],
+    "target": "layers.14.norm_feed_forward1.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.14.norm_conv.weight"
+    ],
+    "target": "layers.14.norm_conv.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.14.norm_conv.bias"
+    ],
+    "target": "layers.14.norm_conv.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      2048,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.14.conv.pointwise_conv1.weight"
+    ],
+    "target": "layers.14.conv.pointwise_conv1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.14.conv.pointwise_conv2.weight"
+    ],
+    "target": "layers.14.conv.pointwise_conv2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.14.norm_self_att.weight"
+    ],
+    "target": "layers.14.norm_self_att.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.14.norm_self_att.bias"
+    ],
+    "target": "layers.14.norm_self_att.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.14.self_attn.bias_u"
+    ],
+    "target": "layers.14.self_attn.pos_bias_u",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.14.self_attn.bias_v"
+    ],
+    "target": "layers.14.self_attn.pos_bias_v",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.14.norm_feed_forward2.weight"
+    ],
+    "target": "layers.14.norm_feed_forward2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.14.norm_feed_forward2.bias"
+    ],
+    "target": "layers.14.norm_feed_forward2.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.14.norm_out.weight"
+    ],
+    "target": "layers.14.norm_out.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.14.norm_out.bias"
+    ],
+    "target": "layers.14.norm_out.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.15.norm_feed_forward1.weight"
+    ],
+    "target": "layers.15.norm_feed_forward1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.15.norm_feed_forward1.bias"
+    ],
+    "target": "layers.15.norm_feed_forward1.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.15.norm_conv.weight"
+    ],
+    "target": "layers.15.norm_conv.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.15.norm_conv.bias"
+    ],
+    "target": "layers.15.norm_conv.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      2048,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.15.conv.pointwise_conv1.weight"
+    ],
+    "target": "layers.15.conv.pointwise_conv1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.15.conv.pointwise_conv2.weight"
+    ],
+    "target": "layers.15.conv.pointwise_conv2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.15.norm_self_att.weight"
+    ],
+    "target": "layers.15.norm_self_att.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.15.norm_self_att.bias"
+    ],
+    "target": "layers.15.norm_self_att.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.15.self_attn.bias_u"
+    ],
+    "target": "layers.15.self_attn.pos_bias_u",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.15.self_attn.bias_v"
+    ],
+    "target": "layers.15.self_attn.pos_bias_v",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.15.norm_feed_forward2.weight"
+    ],
+    "target": "layers.15.norm_feed_forward2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.15.norm_feed_forward2.bias"
+    ],
+    "target": "layers.15.norm_feed_forward2.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.15.norm_out.weight"
+    ],
+    "target": "layers.15.norm_out.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.15.norm_out.bias"
+    ],
+    "target": "layers.15.norm_out.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.16.norm_feed_forward1.weight"
+    ],
+    "target": "layers.16.norm_feed_forward1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.16.norm_feed_forward1.bias"
+    ],
+    "target": "layers.16.norm_feed_forward1.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.16.norm_conv.weight"
+    ],
+    "target": "layers.16.norm_conv.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.16.norm_conv.bias"
+    ],
+    "target": "layers.16.norm_conv.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      2048,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.16.conv.pointwise_conv1.weight"
+    ],
+    "target": "layers.16.conv.pointwise_conv1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.16.conv.pointwise_conv2.weight"
+    ],
+    "target": "layers.16.conv.pointwise_conv2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.16.norm_self_att.weight"
+    ],
+    "target": "layers.16.norm_self_att.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.16.norm_self_att.bias"
+    ],
+    "target": "layers.16.norm_self_att.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.16.self_attn.bias_u"
+    ],
+    "target": "layers.16.self_attn.pos_bias_u",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.16.self_attn.bias_v"
+    ],
+    "target": "layers.16.self_attn.pos_bias_v",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.16.norm_feed_forward2.weight"
+    ],
+    "target": "layers.16.norm_feed_forward2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.16.norm_feed_forward2.bias"
+    ],
+    "target": "layers.16.norm_feed_forward2.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.16.norm_out.weight"
+    ],
+    "target": "layers.16.norm_out.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.16.norm_out.bias"
+    ],
+    "target": "layers.16.norm_out.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.17.norm_feed_forward1.weight"
+    ],
+    "target": "layers.17.norm_feed_forward1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.17.norm_feed_forward1.bias"
+    ],
+    "target": "layers.17.norm_feed_forward1.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.17.norm_conv.weight"
+    ],
+    "target": "layers.17.norm_conv.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.17.norm_conv.bias"
+    ],
+    "target": "layers.17.norm_conv.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      2048,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.17.conv.pointwise_conv1.weight"
+    ],
+    "target": "layers.17.conv.pointwise_conv1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.17.conv.pointwise_conv2.weight"
+    ],
+    "target": "layers.17.conv.pointwise_conv2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.17.norm_self_att.weight"
+    ],
+    "target": "layers.17.norm_self_att.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.17.norm_self_att.bias"
+    ],
+    "target": "layers.17.norm_self_att.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.17.self_attn.bias_u"
+    ],
+    "target": "layers.17.self_attn.pos_bias_u",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.17.self_attn.bias_v"
+    ],
+    "target": "layers.17.self_attn.pos_bias_v",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.17.norm_feed_forward2.weight"
+    ],
+    "target": "layers.17.norm_feed_forward2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.17.norm_feed_forward2.bias"
+    ],
+    "target": "layers.17.norm_feed_forward2.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.17.norm_out.weight"
+    ],
+    "target": "layers.17.norm_out.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.17.norm_out.bias"
+    ],
+    "target": "layers.17.norm_out.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.18.norm_feed_forward1.weight"
+    ],
+    "target": "layers.18.norm_feed_forward1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.18.norm_feed_forward1.bias"
+    ],
+    "target": "layers.18.norm_feed_forward1.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.18.norm_conv.weight"
+    ],
+    "target": "layers.18.norm_conv.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.18.norm_conv.bias"
+    ],
+    "target": "layers.18.norm_conv.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      2048,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.18.conv.pointwise_conv1.weight"
+    ],
+    "target": "layers.18.conv.pointwise_conv1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.18.conv.pointwise_conv2.weight"
+    ],
+    "target": "layers.18.conv.pointwise_conv2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.18.norm_self_att.weight"
+    ],
+    "target": "layers.18.norm_self_att.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.18.norm_self_att.bias"
+    ],
+    "target": "layers.18.norm_self_att.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.18.self_attn.bias_u"
+    ],
+    "target": "layers.18.self_attn.pos_bias_u",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.18.self_attn.bias_v"
+    ],
+    "target": "layers.18.self_attn.pos_bias_v",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.18.norm_feed_forward2.weight"
+    ],
+    "target": "layers.18.norm_feed_forward2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.18.norm_feed_forward2.bias"
+    ],
+    "target": "layers.18.norm_feed_forward2.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.18.norm_out.weight"
+    ],
+    "target": "layers.18.norm_out.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.18.norm_out.bias"
+    ],
+    "target": "layers.18.norm_out.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.19.norm_feed_forward1.weight"
+    ],
+    "target": "layers.19.norm_feed_forward1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.19.norm_feed_forward1.bias"
+    ],
+    "target": "layers.19.norm_feed_forward1.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.19.norm_conv.weight"
+    ],
+    "target": "layers.19.norm_conv.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.19.norm_conv.bias"
+    ],
+    "target": "layers.19.norm_conv.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      2048,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.19.conv.pointwise_conv1.weight"
+    ],
+    "target": "layers.19.conv.pointwise_conv1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.19.conv.pointwise_conv2.weight"
+    ],
+    "target": "layers.19.conv.pointwise_conv2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.19.norm_self_att.weight"
+    ],
+    "target": "layers.19.norm_self_att.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.19.norm_self_att.bias"
+    ],
+    "target": "layers.19.norm_self_att.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.19.self_attn.bias_u"
+    ],
+    "target": "layers.19.self_attn.pos_bias_u",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.19.self_attn.bias_v"
+    ],
+    "target": "layers.19.self_attn.pos_bias_v",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.19.norm_feed_forward2.weight"
+    ],
+    "target": "layers.19.norm_feed_forward2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.19.norm_feed_forward2.bias"
+    ],
+    "target": "layers.19.norm_feed_forward2.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.19.norm_out.weight"
+    ],
+    "target": "layers.19.norm_out.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.19.norm_out.bias"
+    ],
+    "target": "layers.19.norm_out.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.20.norm_feed_forward1.weight"
+    ],
+    "target": "layers.20.norm_feed_forward1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.20.norm_feed_forward1.bias"
+    ],
+    "target": "layers.20.norm_feed_forward1.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.20.norm_conv.weight"
+    ],
+    "target": "layers.20.norm_conv.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.20.norm_conv.bias"
+    ],
+    "target": "layers.20.norm_conv.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      2048,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.20.conv.pointwise_conv1.weight"
+    ],
+    "target": "layers.20.conv.pointwise_conv1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.20.conv.pointwise_conv2.weight"
+    ],
+    "target": "layers.20.conv.pointwise_conv2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.20.norm_self_att.weight"
+    ],
+    "target": "layers.20.norm_self_att.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.20.norm_self_att.bias"
+    ],
+    "target": "layers.20.norm_self_att.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.20.self_attn.bias_u"
+    ],
+    "target": "layers.20.self_attn.pos_bias_u",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.20.self_attn.bias_v"
+    ],
+    "target": "layers.20.self_attn.pos_bias_v",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.20.norm_feed_forward2.weight"
+    ],
+    "target": "layers.20.norm_feed_forward2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.20.norm_feed_forward2.bias"
+    ],
+    "target": "layers.20.norm_feed_forward2.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.20.norm_out.weight"
+    ],
+    "target": "layers.20.norm_out.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.20.norm_out.bias"
+    ],
+    "target": "layers.20.norm_out.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.21.norm_feed_forward1.weight"
+    ],
+    "target": "layers.21.norm_feed_forward1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.21.norm_feed_forward1.bias"
+    ],
+    "target": "layers.21.norm_feed_forward1.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.21.norm_conv.weight"
+    ],
+    "target": "layers.21.norm_conv.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.21.norm_conv.bias"
+    ],
+    "target": "layers.21.norm_conv.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      2048,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.21.conv.pointwise_conv1.weight"
+    ],
+    "target": "layers.21.conv.pointwise_conv1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.21.conv.pointwise_conv2.weight"
+    ],
+    "target": "layers.21.conv.pointwise_conv2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.21.norm_self_att.weight"
+    ],
+    "target": "layers.21.norm_self_att.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.21.norm_self_att.bias"
+    ],
+    "target": "layers.21.norm_self_att.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.21.self_attn.bias_u"
+    ],
+    "target": "layers.21.self_attn.pos_bias_u",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.21.self_attn.bias_v"
+    ],
+    "target": "layers.21.self_attn.pos_bias_v",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.21.norm_feed_forward2.weight"
+    ],
+    "target": "layers.21.norm_feed_forward2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.21.norm_feed_forward2.bias"
+    ],
+    "target": "layers.21.norm_feed_forward2.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.21.norm_out.weight"
+    ],
+    "target": "layers.21.norm_out.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.21.norm_out.bias"
+    ],
+    "target": "layers.21.norm_out.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.22.norm_feed_forward1.weight"
+    ],
+    "target": "layers.22.norm_feed_forward1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.22.norm_feed_forward1.bias"
+    ],
+    "target": "layers.22.norm_feed_forward1.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.22.norm_conv.weight"
+    ],
+    "target": "layers.22.norm_conv.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.22.norm_conv.bias"
+    ],
+    "target": "layers.22.norm_conv.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      2048,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.22.conv.pointwise_conv1.weight"
+    ],
+    "target": "layers.22.conv.pointwise_conv1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.22.conv.pointwise_conv2.weight"
+    ],
+    "target": "layers.22.conv.pointwise_conv2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.22.norm_self_att.weight"
+    ],
+    "target": "layers.22.norm_self_att.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.22.norm_self_att.bias"
+    ],
+    "target": "layers.22.norm_self_att.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.22.self_attn.bias_u"
+    ],
+    "target": "layers.22.self_attn.pos_bias_u",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.22.self_attn.bias_v"
+    ],
+    "target": "layers.22.self_attn.pos_bias_v",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.22.norm_feed_forward2.weight"
+    ],
+    "target": "layers.22.norm_feed_forward2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.22.norm_feed_forward2.bias"
+    ],
+    "target": "layers.22.norm_feed_forward2.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.22.norm_out.weight"
+    ],
+    "target": "layers.22.norm_out.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.22.norm_out.bias"
+    ],
+    "target": "layers.22.norm_out.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.23.norm_feed_forward1.weight"
+    ],
+    "target": "layers.23.norm_feed_forward1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.23.norm_feed_forward1.bias"
+    ],
+    "target": "layers.23.norm_feed_forward1.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.23.norm_conv.weight"
+    ],
+    "target": "layers.23.norm_conv.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.23.norm_conv.bias"
+    ],
+    "target": "layers.23.norm_conv.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      2048,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.23.conv.pointwise_conv1.weight"
+    ],
+    "target": "layers.23.conv.pointwise_conv1.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024,
+      1
+    ],
+    "sources": [
+      "encoder.layers.23.conv.pointwise_conv2.weight"
+    ],
+    "target": "layers.23.conv.pointwise_conv2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.23.norm_self_att.weight"
+    ],
+    "target": "layers.23.norm_self_att.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.23.norm_self_att.bias"
+    ],
+    "target": "layers.23.norm_self_att.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.23.self_attn.bias_u"
+    ],
+    "target": "layers.23.self_attn.pos_bias_u",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      8,
+      128
+    ],
+    "sources": [
+      "encoder.layers.23.self_attn.bias_v"
+    ],
+    "target": "layers.23.self_attn.pos_bias_v",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.23.norm_feed_forward2.weight"
+    ],
+    "target": "layers.23.norm_feed_forward2.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.23.norm_feed_forward2.bias"
+    ],
+    "target": "layers.23.norm_feed_forward2.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.23.norm_out.weight"
+    ],
+    "target": "layers.23.norm_out.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.23.norm_out.bias"
+    ],
+    "target": "layers.23.norm_out.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1,
+      9
+    ],
+    "sources": [
+      "encoder.layers.0.conv.depthwise_conv.weight",
+      "encoder.layers.0.conv.norm.weight",
+      "encoder.layers.0.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6310",
+    "transform": "batch_norm_weight"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.0.conv.norm.bias",
+      "encoder.layers.0.conv.norm.weight",
+      "encoder.layers.0.conv.norm.running_mean",
+      "encoder.layers.0.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6311",
+    "transform": "batch_norm_bias"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1,
+      9
+    ],
+    "sources": [
+      "encoder.layers.1.conv.depthwise_conv.weight",
+      "encoder.layers.1.conv.norm.weight",
+      "encoder.layers.1.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6313",
+    "transform": "batch_norm_weight"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.1.conv.norm.bias",
+      "encoder.layers.1.conv.norm.weight",
+      "encoder.layers.1.conv.norm.running_mean",
+      "encoder.layers.1.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6314",
+    "transform": "batch_norm_bias"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1,
+      9
+    ],
+    "sources": [
+      "encoder.layers.2.conv.depthwise_conv.weight",
+      "encoder.layers.2.conv.norm.weight",
+      "encoder.layers.2.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6316",
+    "transform": "batch_norm_weight"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.2.conv.norm.bias",
+      "encoder.layers.2.conv.norm.weight",
+      "encoder.layers.2.conv.norm.running_mean",
+      "encoder.layers.2.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6317",
+    "transform": "batch_norm_bias"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1,
+      9
+    ],
+    "sources": [
+      "encoder.layers.3.conv.depthwise_conv.weight",
+      "encoder.layers.3.conv.norm.weight",
+      "encoder.layers.3.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6319",
+    "transform": "batch_norm_weight"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.3.conv.norm.bias",
+      "encoder.layers.3.conv.norm.weight",
+      "encoder.layers.3.conv.norm.running_mean",
+      "encoder.layers.3.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6320",
+    "transform": "batch_norm_bias"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1,
+      9
+    ],
+    "sources": [
+      "encoder.layers.4.conv.depthwise_conv.weight",
+      "encoder.layers.4.conv.norm.weight",
+      "encoder.layers.4.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6322",
+    "transform": "batch_norm_weight"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.4.conv.norm.bias",
+      "encoder.layers.4.conv.norm.weight",
+      "encoder.layers.4.conv.norm.running_mean",
+      "encoder.layers.4.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6323",
+    "transform": "batch_norm_bias"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1,
+      9
+    ],
+    "sources": [
+      "encoder.layers.5.conv.depthwise_conv.weight",
+      "encoder.layers.5.conv.norm.weight",
+      "encoder.layers.5.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6325",
+    "transform": "batch_norm_weight"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.5.conv.norm.bias",
+      "encoder.layers.5.conv.norm.weight",
+      "encoder.layers.5.conv.norm.running_mean",
+      "encoder.layers.5.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6326",
+    "transform": "batch_norm_bias"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1,
+      9
+    ],
+    "sources": [
+      "encoder.layers.6.conv.depthwise_conv.weight",
+      "encoder.layers.6.conv.norm.weight",
+      "encoder.layers.6.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6328",
+    "transform": "batch_norm_weight"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.6.conv.norm.bias",
+      "encoder.layers.6.conv.norm.weight",
+      "encoder.layers.6.conv.norm.running_mean",
+      "encoder.layers.6.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6329",
+    "transform": "batch_norm_bias"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1,
+      9
+    ],
+    "sources": [
+      "encoder.layers.7.conv.depthwise_conv.weight",
+      "encoder.layers.7.conv.norm.weight",
+      "encoder.layers.7.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6331",
+    "transform": "batch_norm_weight"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.7.conv.norm.bias",
+      "encoder.layers.7.conv.norm.weight",
+      "encoder.layers.7.conv.norm.running_mean",
+      "encoder.layers.7.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6332",
+    "transform": "batch_norm_bias"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1,
+      9
+    ],
+    "sources": [
+      "encoder.layers.8.conv.depthwise_conv.weight",
+      "encoder.layers.8.conv.norm.weight",
+      "encoder.layers.8.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6334",
+    "transform": "batch_norm_weight"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.8.conv.norm.bias",
+      "encoder.layers.8.conv.norm.weight",
+      "encoder.layers.8.conv.norm.running_mean",
+      "encoder.layers.8.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6335",
+    "transform": "batch_norm_bias"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1,
+      9
+    ],
+    "sources": [
+      "encoder.layers.9.conv.depthwise_conv.weight",
+      "encoder.layers.9.conv.norm.weight",
+      "encoder.layers.9.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6337",
+    "transform": "batch_norm_weight"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.9.conv.norm.bias",
+      "encoder.layers.9.conv.norm.weight",
+      "encoder.layers.9.conv.norm.running_mean",
+      "encoder.layers.9.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6338",
+    "transform": "batch_norm_bias"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1,
+      9
+    ],
+    "sources": [
+      "encoder.layers.10.conv.depthwise_conv.weight",
+      "encoder.layers.10.conv.norm.weight",
+      "encoder.layers.10.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6340",
+    "transform": "batch_norm_weight"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.10.conv.norm.bias",
+      "encoder.layers.10.conv.norm.weight",
+      "encoder.layers.10.conv.norm.running_mean",
+      "encoder.layers.10.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6341",
+    "transform": "batch_norm_bias"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1,
+      9
+    ],
+    "sources": [
+      "encoder.layers.11.conv.depthwise_conv.weight",
+      "encoder.layers.11.conv.norm.weight",
+      "encoder.layers.11.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6343",
+    "transform": "batch_norm_weight"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.11.conv.norm.bias",
+      "encoder.layers.11.conv.norm.weight",
+      "encoder.layers.11.conv.norm.running_mean",
+      "encoder.layers.11.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6344",
+    "transform": "batch_norm_bias"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1,
+      9
+    ],
+    "sources": [
+      "encoder.layers.12.conv.depthwise_conv.weight",
+      "encoder.layers.12.conv.norm.weight",
+      "encoder.layers.12.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6346",
+    "transform": "batch_norm_weight"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.12.conv.norm.bias",
+      "encoder.layers.12.conv.norm.weight",
+      "encoder.layers.12.conv.norm.running_mean",
+      "encoder.layers.12.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6347",
+    "transform": "batch_norm_bias"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1,
+      9
+    ],
+    "sources": [
+      "encoder.layers.13.conv.depthwise_conv.weight",
+      "encoder.layers.13.conv.norm.weight",
+      "encoder.layers.13.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6349",
+    "transform": "batch_norm_weight"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.13.conv.norm.bias",
+      "encoder.layers.13.conv.norm.weight",
+      "encoder.layers.13.conv.norm.running_mean",
+      "encoder.layers.13.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6350",
+    "transform": "batch_norm_bias"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1,
+      9
+    ],
+    "sources": [
+      "encoder.layers.14.conv.depthwise_conv.weight",
+      "encoder.layers.14.conv.norm.weight",
+      "encoder.layers.14.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6352",
+    "transform": "batch_norm_weight"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.14.conv.norm.bias",
+      "encoder.layers.14.conv.norm.weight",
+      "encoder.layers.14.conv.norm.running_mean",
+      "encoder.layers.14.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6353",
+    "transform": "batch_norm_bias"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1,
+      9
+    ],
+    "sources": [
+      "encoder.layers.15.conv.depthwise_conv.weight",
+      "encoder.layers.15.conv.norm.weight",
+      "encoder.layers.15.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6355",
+    "transform": "batch_norm_weight"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.15.conv.norm.bias",
+      "encoder.layers.15.conv.norm.weight",
+      "encoder.layers.15.conv.norm.running_mean",
+      "encoder.layers.15.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6356",
+    "transform": "batch_norm_bias"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1,
+      9
+    ],
+    "sources": [
+      "encoder.layers.16.conv.depthwise_conv.weight",
+      "encoder.layers.16.conv.norm.weight",
+      "encoder.layers.16.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6358",
+    "transform": "batch_norm_weight"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.16.conv.norm.bias",
+      "encoder.layers.16.conv.norm.weight",
+      "encoder.layers.16.conv.norm.running_mean",
+      "encoder.layers.16.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6359",
+    "transform": "batch_norm_bias"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1,
+      9
+    ],
+    "sources": [
+      "encoder.layers.17.conv.depthwise_conv.weight",
+      "encoder.layers.17.conv.norm.weight",
+      "encoder.layers.17.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6361",
+    "transform": "batch_norm_weight"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.17.conv.norm.bias",
+      "encoder.layers.17.conv.norm.weight",
+      "encoder.layers.17.conv.norm.running_mean",
+      "encoder.layers.17.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6362",
+    "transform": "batch_norm_bias"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1,
+      9
+    ],
+    "sources": [
+      "encoder.layers.18.conv.depthwise_conv.weight",
+      "encoder.layers.18.conv.norm.weight",
+      "encoder.layers.18.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6364",
+    "transform": "batch_norm_weight"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.18.conv.norm.bias",
+      "encoder.layers.18.conv.norm.weight",
+      "encoder.layers.18.conv.norm.running_mean",
+      "encoder.layers.18.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6365",
+    "transform": "batch_norm_bias"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1,
+      9
+    ],
+    "sources": [
+      "encoder.layers.19.conv.depthwise_conv.weight",
+      "encoder.layers.19.conv.norm.weight",
+      "encoder.layers.19.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6367",
+    "transform": "batch_norm_weight"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.19.conv.norm.bias",
+      "encoder.layers.19.conv.norm.weight",
+      "encoder.layers.19.conv.norm.running_mean",
+      "encoder.layers.19.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6368",
+    "transform": "batch_norm_bias"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1,
+      9
+    ],
+    "sources": [
+      "encoder.layers.20.conv.depthwise_conv.weight",
+      "encoder.layers.20.conv.norm.weight",
+      "encoder.layers.20.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6370",
+    "transform": "batch_norm_weight"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.20.conv.norm.bias",
+      "encoder.layers.20.conv.norm.weight",
+      "encoder.layers.20.conv.norm.running_mean",
+      "encoder.layers.20.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6371",
+    "transform": "batch_norm_bias"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1,
+      9
+    ],
+    "sources": [
+      "encoder.layers.21.conv.depthwise_conv.weight",
+      "encoder.layers.21.conv.norm.weight",
+      "encoder.layers.21.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6373",
+    "transform": "batch_norm_weight"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.21.conv.norm.bias",
+      "encoder.layers.21.conv.norm.weight",
+      "encoder.layers.21.conv.norm.running_mean",
+      "encoder.layers.21.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6374",
+    "transform": "batch_norm_bias"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1,
+      9
+    ],
+    "sources": [
+      "encoder.layers.22.conv.depthwise_conv.weight",
+      "encoder.layers.22.conv.norm.weight",
+      "encoder.layers.22.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6376",
+    "transform": "batch_norm_weight"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.22.conv.norm.bias",
+      "encoder.layers.22.conv.norm.weight",
+      "encoder.layers.22.conv.norm.running_mean",
+      "encoder.layers.22.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6377",
+    "transform": "batch_norm_bias"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1,
+      9
+    ],
+    "sources": [
+      "encoder.layers.23.conv.depthwise_conv.weight",
+      "encoder.layers.23.conv.norm.weight",
+      "encoder.layers.23.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6379",
+    "transform": "batch_norm_weight"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024
+    ],
+    "sources": [
+      "encoder.layers.23.conv.norm.bias",
+      "encoder.layers.23.conv.norm.weight",
+      "encoder.layers.23.conv.norm.running_mean",
+      "encoder.layers.23.conv.norm.running_var"
+    ],
+    "target": "onnx::Conv_6380",
+    "transform": "batch_norm_bias"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.subsampling.linear.weight"
+    ],
+    "target": "onnx::MatMul_6382",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.0.feed_forward1.linear1.weight"
+    ],
+    "target": "onnx::MatMul_6398",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.0.feed_forward1.linear2.weight"
+    ],
+    "target": "onnx::MatMul_6399",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.0.self_attn.q_proj.weight"
+    ],
+    "target": "onnx::MatMul_6400",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.0.self_attn.k_proj.weight"
+    ],
+    "target": "onnx::MatMul_6410",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.0.self_attn.v_proj.weight"
+    ],
+    "target": "onnx::MatMul_6411",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.0.self_attn.relative_k_proj.weight"
+    ],
+    "target": "onnx::MatMul_6412",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.0.self_attn.o_proj.weight"
+    ],
+    "target": "onnx::MatMul_6500",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.0.feed_forward2.linear1.weight"
+    ],
+    "target": "onnx::MatMul_6506",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.0.feed_forward2.linear2.weight"
+    ],
+    "target": "onnx::MatMul_6507",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.1.feed_forward1.linear1.weight"
+    ],
+    "target": "onnx::MatMul_6508",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.1.feed_forward1.linear2.weight"
+    ],
+    "target": "onnx::MatMul_6509",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.1.self_attn.q_proj.weight"
+    ],
+    "target": "onnx::MatMul_6510",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.1.self_attn.k_proj.weight"
+    ],
+    "target": "onnx::MatMul_6520",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.1.self_attn.v_proj.weight"
+    ],
+    "target": "onnx::MatMul_6521",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.1.self_attn.relative_k_proj.weight"
+    ],
+    "target": "onnx::MatMul_6522",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.1.self_attn.o_proj.weight"
+    ],
+    "target": "onnx::MatMul_6538",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.1.feed_forward2.linear1.weight"
+    ],
+    "target": "onnx::MatMul_6544",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.1.feed_forward2.linear2.weight"
+    ],
+    "target": "onnx::MatMul_6545",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.2.feed_forward1.linear1.weight"
+    ],
+    "target": "onnx::MatMul_6546",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.2.feed_forward1.linear2.weight"
+    ],
+    "target": "onnx::MatMul_6547",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.2.self_attn.q_proj.weight"
+    ],
+    "target": "onnx::MatMul_6548",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.2.self_attn.k_proj.weight"
+    ],
+    "target": "onnx::MatMul_6558",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.2.self_attn.v_proj.weight"
+    ],
+    "target": "onnx::MatMul_6559",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.2.self_attn.relative_k_proj.weight"
+    ],
+    "target": "onnx::MatMul_6560",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.2.self_attn.o_proj.weight"
+    ],
+    "target": "onnx::MatMul_6576",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.2.feed_forward2.linear1.weight"
+    ],
+    "target": "onnx::MatMul_6582",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.2.feed_forward2.linear2.weight"
+    ],
+    "target": "onnx::MatMul_6583",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.3.feed_forward1.linear1.weight"
+    ],
+    "target": "onnx::MatMul_6584",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.3.feed_forward1.linear2.weight"
+    ],
+    "target": "onnx::MatMul_6585",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.3.self_attn.q_proj.weight"
+    ],
+    "target": "onnx::MatMul_6586",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.3.self_attn.k_proj.weight"
+    ],
+    "target": "onnx::MatMul_6596",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.3.self_attn.v_proj.weight"
+    ],
+    "target": "onnx::MatMul_6597",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.3.self_attn.relative_k_proj.weight"
+    ],
+    "target": "onnx::MatMul_6598",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.3.self_attn.o_proj.weight"
+    ],
+    "target": "onnx::MatMul_6614",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.3.feed_forward2.linear1.weight"
+    ],
+    "target": "onnx::MatMul_6620",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.3.feed_forward2.linear2.weight"
+    ],
+    "target": "onnx::MatMul_6621",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.4.feed_forward1.linear1.weight"
+    ],
+    "target": "onnx::MatMul_6622",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.4.feed_forward1.linear2.weight"
+    ],
+    "target": "onnx::MatMul_6623",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.4.self_attn.q_proj.weight"
+    ],
+    "target": "onnx::MatMul_6624",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.4.self_attn.k_proj.weight"
+    ],
+    "target": "onnx::MatMul_6634",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.4.self_attn.v_proj.weight"
+    ],
+    "target": "onnx::MatMul_6635",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.4.self_attn.relative_k_proj.weight"
+    ],
+    "target": "onnx::MatMul_6636",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.4.self_attn.o_proj.weight"
+    ],
+    "target": "onnx::MatMul_6652",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.4.feed_forward2.linear1.weight"
+    ],
+    "target": "onnx::MatMul_6658",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.4.feed_forward2.linear2.weight"
+    ],
+    "target": "onnx::MatMul_6659",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.5.feed_forward1.linear1.weight"
+    ],
+    "target": "onnx::MatMul_6660",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.5.feed_forward1.linear2.weight"
+    ],
+    "target": "onnx::MatMul_6661",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.5.self_attn.q_proj.weight"
+    ],
+    "target": "onnx::MatMul_6662",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.5.self_attn.k_proj.weight"
+    ],
+    "target": "onnx::MatMul_6672",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.5.self_attn.v_proj.weight"
+    ],
+    "target": "onnx::MatMul_6673",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.5.self_attn.relative_k_proj.weight"
+    ],
+    "target": "onnx::MatMul_6674",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.5.self_attn.o_proj.weight"
+    ],
+    "target": "onnx::MatMul_6690",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.5.feed_forward2.linear1.weight"
+    ],
+    "target": "onnx::MatMul_6696",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.5.feed_forward2.linear2.weight"
+    ],
+    "target": "onnx::MatMul_6697",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.6.feed_forward1.linear1.weight"
+    ],
+    "target": "onnx::MatMul_6698",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.6.feed_forward1.linear2.weight"
+    ],
+    "target": "onnx::MatMul_6699",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.6.self_attn.q_proj.weight"
+    ],
+    "target": "onnx::MatMul_6700",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.6.self_attn.k_proj.weight"
+    ],
+    "target": "onnx::MatMul_6710",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.6.self_attn.v_proj.weight"
+    ],
+    "target": "onnx::MatMul_6711",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.6.self_attn.relative_k_proj.weight"
+    ],
+    "target": "onnx::MatMul_6712",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.6.self_attn.o_proj.weight"
+    ],
+    "target": "onnx::MatMul_6728",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.6.feed_forward2.linear1.weight"
+    ],
+    "target": "onnx::MatMul_6734",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.6.feed_forward2.linear2.weight"
+    ],
+    "target": "onnx::MatMul_6735",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.7.feed_forward1.linear1.weight"
+    ],
+    "target": "onnx::MatMul_6736",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.7.feed_forward1.linear2.weight"
+    ],
+    "target": "onnx::MatMul_6737",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.7.self_attn.q_proj.weight"
+    ],
+    "target": "onnx::MatMul_6738",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.7.self_attn.k_proj.weight"
+    ],
+    "target": "onnx::MatMul_6748",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.7.self_attn.v_proj.weight"
+    ],
+    "target": "onnx::MatMul_6749",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.7.self_attn.relative_k_proj.weight"
+    ],
+    "target": "onnx::MatMul_6750",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.7.self_attn.o_proj.weight"
+    ],
+    "target": "onnx::MatMul_6766",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.7.feed_forward2.linear1.weight"
+    ],
+    "target": "onnx::MatMul_6772",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.7.feed_forward2.linear2.weight"
+    ],
+    "target": "onnx::MatMul_6773",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.8.feed_forward1.linear1.weight"
+    ],
+    "target": "onnx::MatMul_6774",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.8.feed_forward1.linear2.weight"
+    ],
+    "target": "onnx::MatMul_6775",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.8.self_attn.q_proj.weight"
+    ],
+    "target": "onnx::MatMul_6776",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.8.self_attn.k_proj.weight"
+    ],
+    "target": "onnx::MatMul_6786",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.8.self_attn.v_proj.weight"
+    ],
+    "target": "onnx::MatMul_6787",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.8.self_attn.relative_k_proj.weight"
+    ],
+    "target": "onnx::MatMul_6788",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.8.self_attn.o_proj.weight"
+    ],
+    "target": "onnx::MatMul_6804",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.8.feed_forward2.linear1.weight"
+    ],
+    "target": "onnx::MatMul_6810",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.8.feed_forward2.linear2.weight"
+    ],
+    "target": "onnx::MatMul_6811",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.9.feed_forward1.linear1.weight"
+    ],
+    "target": "onnx::MatMul_6812",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.9.feed_forward1.linear2.weight"
+    ],
+    "target": "onnx::MatMul_6813",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.9.self_attn.q_proj.weight"
+    ],
+    "target": "onnx::MatMul_6814",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.9.self_attn.k_proj.weight"
+    ],
+    "target": "onnx::MatMul_6824",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.9.self_attn.v_proj.weight"
+    ],
+    "target": "onnx::MatMul_6825",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.9.self_attn.relative_k_proj.weight"
+    ],
+    "target": "onnx::MatMul_6826",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.9.self_attn.o_proj.weight"
+    ],
+    "target": "onnx::MatMul_6842",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.9.feed_forward2.linear1.weight"
+    ],
+    "target": "onnx::MatMul_6848",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.9.feed_forward2.linear2.weight"
+    ],
+    "target": "onnx::MatMul_6849",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.10.feed_forward1.linear1.weight"
+    ],
+    "target": "onnx::MatMul_6850",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.10.feed_forward1.linear2.weight"
+    ],
+    "target": "onnx::MatMul_6851",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.10.self_attn.q_proj.weight"
+    ],
+    "target": "onnx::MatMul_6852",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.10.self_attn.k_proj.weight"
+    ],
+    "target": "onnx::MatMul_6862",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.10.self_attn.v_proj.weight"
+    ],
+    "target": "onnx::MatMul_6863",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.10.self_attn.relative_k_proj.weight"
+    ],
+    "target": "onnx::MatMul_6864",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.10.self_attn.o_proj.weight"
+    ],
+    "target": "onnx::MatMul_6880",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.10.feed_forward2.linear1.weight"
+    ],
+    "target": "onnx::MatMul_6886",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.10.feed_forward2.linear2.weight"
+    ],
+    "target": "onnx::MatMul_6887",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.11.feed_forward1.linear1.weight"
+    ],
+    "target": "onnx::MatMul_6888",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.11.feed_forward1.linear2.weight"
+    ],
+    "target": "onnx::MatMul_6889",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.11.self_attn.q_proj.weight"
+    ],
+    "target": "onnx::MatMul_6890",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.11.self_attn.k_proj.weight"
+    ],
+    "target": "onnx::MatMul_6900",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.11.self_attn.v_proj.weight"
+    ],
+    "target": "onnx::MatMul_6901",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.11.self_attn.relative_k_proj.weight"
+    ],
+    "target": "onnx::MatMul_6902",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.11.self_attn.o_proj.weight"
+    ],
+    "target": "onnx::MatMul_6918",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.11.feed_forward2.linear1.weight"
+    ],
+    "target": "onnx::MatMul_6924",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.11.feed_forward2.linear2.weight"
+    ],
+    "target": "onnx::MatMul_6925",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.12.feed_forward1.linear1.weight"
+    ],
+    "target": "onnx::MatMul_6926",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.12.feed_forward1.linear2.weight"
+    ],
+    "target": "onnx::MatMul_6927",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.12.self_attn.q_proj.weight"
+    ],
+    "target": "onnx::MatMul_6928",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.12.self_attn.k_proj.weight"
+    ],
+    "target": "onnx::MatMul_6938",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.12.self_attn.v_proj.weight"
+    ],
+    "target": "onnx::MatMul_6939",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.12.self_attn.relative_k_proj.weight"
+    ],
+    "target": "onnx::MatMul_6940",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.12.self_attn.o_proj.weight"
+    ],
+    "target": "onnx::MatMul_6956",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.12.feed_forward2.linear1.weight"
+    ],
+    "target": "onnx::MatMul_6962",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.12.feed_forward2.linear2.weight"
+    ],
+    "target": "onnx::MatMul_6963",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.13.feed_forward1.linear1.weight"
+    ],
+    "target": "onnx::MatMul_6964",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.13.feed_forward1.linear2.weight"
+    ],
+    "target": "onnx::MatMul_6965",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.13.self_attn.q_proj.weight"
+    ],
+    "target": "onnx::MatMul_6966",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.13.self_attn.k_proj.weight"
+    ],
+    "target": "onnx::MatMul_6976",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.13.self_attn.v_proj.weight"
+    ],
+    "target": "onnx::MatMul_6977",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.13.self_attn.relative_k_proj.weight"
+    ],
+    "target": "onnx::MatMul_6978",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.13.self_attn.o_proj.weight"
+    ],
+    "target": "onnx::MatMul_6994",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.13.feed_forward2.linear1.weight"
+    ],
+    "target": "onnx::MatMul_7000",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.13.feed_forward2.linear2.weight"
+    ],
+    "target": "onnx::MatMul_7001",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.14.feed_forward1.linear1.weight"
+    ],
+    "target": "onnx::MatMul_7002",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.14.feed_forward1.linear2.weight"
+    ],
+    "target": "onnx::MatMul_7003",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.14.self_attn.q_proj.weight"
+    ],
+    "target": "onnx::MatMul_7004",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.14.self_attn.k_proj.weight"
+    ],
+    "target": "onnx::MatMul_7014",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.14.self_attn.v_proj.weight"
+    ],
+    "target": "onnx::MatMul_7015",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.14.self_attn.relative_k_proj.weight"
+    ],
+    "target": "onnx::MatMul_7016",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.14.self_attn.o_proj.weight"
+    ],
+    "target": "onnx::MatMul_7032",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.14.feed_forward2.linear1.weight"
+    ],
+    "target": "onnx::MatMul_7038",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.14.feed_forward2.linear2.weight"
+    ],
+    "target": "onnx::MatMul_7039",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.15.feed_forward1.linear1.weight"
+    ],
+    "target": "onnx::MatMul_7040",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.15.feed_forward1.linear2.weight"
+    ],
+    "target": "onnx::MatMul_7041",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.15.self_attn.q_proj.weight"
+    ],
+    "target": "onnx::MatMul_7042",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.15.self_attn.k_proj.weight"
+    ],
+    "target": "onnx::MatMul_7052",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.15.self_attn.v_proj.weight"
+    ],
+    "target": "onnx::MatMul_7053",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.15.self_attn.relative_k_proj.weight"
+    ],
+    "target": "onnx::MatMul_7054",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.15.self_attn.o_proj.weight"
+    ],
+    "target": "onnx::MatMul_7070",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.15.feed_forward2.linear1.weight"
+    ],
+    "target": "onnx::MatMul_7076",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.15.feed_forward2.linear2.weight"
+    ],
+    "target": "onnx::MatMul_7077",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.16.feed_forward1.linear1.weight"
+    ],
+    "target": "onnx::MatMul_7078",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.16.feed_forward1.linear2.weight"
+    ],
+    "target": "onnx::MatMul_7079",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.16.self_attn.q_proj.weight"
+    ],
+    "target": "onnx::MatMul_7080",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.16.self_attn.k_proj.weight"
+    ],
+    "target": "onnx::MatMul_7090",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.16.self_attn.v_proj.weight"
+    ],
+    "target": "onnx::MatMul_7091",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.16.self_attn.relative_k_proj.weight"
+    ],
+    "target": "onnx::MatMul_7092",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.16.self_attn.o_proj.weight"
+    ],
+    "target": "onnx::MatMul_7108",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.16.feed_forward2.linear1.weight"
+    ],
+    "target": "onnx::MatMul_7114",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.16.feed_forward2.linear2.weight"
+    ],
+    "target": "onnx::MatMul_7115",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.17.feed_forward1.linear1.weight"
+    ],
+    "target": "onnx::MatMul_7116",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.17.feed_forward1.linear2.weight"
+    ],
+    "target": "onnx::MatMul_7117",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.17.self_attn.q_proj.weight"
+    ],
+    "target": "onnx::MatMul_7118",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.17.self_attn.k_proj.weight"
+    ],
+    "target": "onnx::MatMul_7128",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.17.self_attn.v_proj.weight"
+    ],
+    "target": "onnx::MatMul_7129",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.17.self_attn.relative_k_proj.weight"
+    ],
+    "target": "onnx::MatMul_7130",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.17.self_attn.o_proj.weight"
+    ],
+    "target": "onnx::MatMul_7146",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.17.feed_forward2.linear1.weight"
+    ],
+    "target": "onnx::MatMul_7152",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.17.feed_forward2.linear2.weight"
+    ],
+    "target": "onnx::MatMul_7153",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.18.feed_forward1.linear1.weight"
+    ],
+    "target": "onnx::MatMul_7154",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.18.feed_forward1.linear2.weight"
+    ],
+    "target": "onnx::MatMul_7155",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.18.self_attn.q_proj.weight"
+    ],
+    "target": "onnx::MatMul_7156",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.18.self_attn.k_proj.weight"
+    ],
+    "target": "onnx::MatMul_7166",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.18.self_attn.v_proj.weight"
+    ],
+    "target": "onnx::MatMul_7167",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.18.self_attn.relative_k_proj.weight"
+    ],
+    "target": "onnx::MatMul_7168",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.18.self_attn.o_proj.weight"
+    ],
+    "target": "onnx::MatMul_7184",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.18.feed_forward2.linear1.weight"
+    ],
+    "target": "onnx::MatMul_7190",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.18.feed_forward2.linear2.weight"
+    ],
+    "target": "onnx::MatMul_7191",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.19.feed_forward1.linear1.weight"
+    ],
+    "target": "onnx::MatMul_7192",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.19.feed_forward1.linear2.weight"
+    ],
+    "target": "onnx::MatMul_7193",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.19.self_attn.q_proj.weight"
+    ],
+    "target": "onnx::MatMul_7194",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.19.self_attn.k_proj.weight"
+    ],
+    "target": "onnx::MatMul_7204",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.19.self_attn.v_proj.weight"
+    ],
+    "target": "onnx::MatMul_7205",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.19.self_attn.relative_k_proj.weight"
+    ],
+    "target": "onnx::MatMul_7206",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.19.self_attn.o_proj.weight"
+    ],
+    "target": "onnx::MatMul_7222",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.19.feed_forward2.linear1.weight"
+    ],
+    "target": "onnx::MatMul_7228",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.19.feed_forward2.linear2.weight"
+    ],
+    "target": "onnx::MatMul_7229",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.20.feed_forward1.linear1.weight"
+    ],
+    "target": "onnx::MatMul_7230",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.20.feed_forward1.linear2.weight"
+    ],
+    "target": "onnx::MatMul_7231",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.20.self_attn.q_proj.weight"
+    ],
+    "target": "onnx::MatMul_7232",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.20.self_attn.k_proj.weight"
+    ],
+    "target": "onnx::MatMul_7242",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.20.self_attn.v_proj.weight"
+    ],
+    "target": "onnx::MatMul_7243",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.20.self_attn.relative_k_proj.weight"
+    ],
+    "target": "onnx::MatMul_7244",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.20.self_attn.o_proj.weight"
+    ],
+    "target": "onnx::MatMul_7260",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.20.feed_forward2.linear1.weight"
+    ],
+    "target": "onnx::MatMul_7266",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.20.feed_forward2.linear2.weight"
+    ],
+    "target": "onnx::MatMul_7267",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.21.feed_forward1.linear1.weight"
+    ],
+    "target": "onnx::MatMul_7268",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.21.feed_forward1.linear2.weight"
+    ],
+    "target": "onnx::MatMul_7269",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.21.self_attn.q_proj.weight"
+    ],
+    "target": "onnx::MatMul_7270",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.21.self_attn.k_proj.weight"
+    ],
+    "target": "onnx::MatMul_7280",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.21.self_attn.v_proj.weight"
+    ],
+    "target": "onnx::MatMul_7281",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.21.self_attn.relative_k_proj.weight"
+    ],
+    "target": "onnx::MatMul_7282",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.21.self_attn.o_proj.weight"
+    ],
+    "target": "onnx::MatMul_7298",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.21.feed_forward2.linear1.weight"
+    ],
+    "target": "onnx::MatMul_7304",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.21.feed_forward2.linear2.weight"
+    ],
+    "target": "onnx::MatMul_7305",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.22.feed_forward1.linear1.weight"
+    ],
+    "target": "onnx::MatMul_7306",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.22.feed_forward1.linear2.weight"
+    ],
+    "target": "onnx::MatMul_7307",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.22.self_attn.q_proj.weight"
+    ],
+    "target": "onnx::MatMul_7308",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.22.self_attn.k_proj.weight"
+    ],
+    "target": "onnx::MatMul_7318",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.22.self_attn.v_proj.weight"
+    ],
+    "target": "onnx::MatMul_7319",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.22.self_attn.relative_k_proj.weight"
+    ],
+    "target": "onnx::MatMul_7320",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.22.self_attn.o_proj.weight"
+    ],
+    "target": "onnx::MatMul_7336",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.22.feed_forward2.linear1.weight"
+    ],
+    "target": "onnx::MatMul_7342",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.22.feed_forward2.linear2.weight"
+    ],
+    "target": "onnx::MatMul_7343",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.23.feed_forward1.linear1.weight"
+    ],
+    "target": "onnx::MatMul_7344",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.23.feed_forward1.linear2.weight"
+    ],
+    "target": "onnx::MatMul_7345",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.23.self_attn.q_proj.weight"
+    ],
+    "target": "onnx::MatMul_7346",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.23.self_attn.k_proj.weight"
+    ],
+    "target": "onnx::MatMul_7356",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.23.self_attn.v_proj.weight"
+    ],
+    "target": "onnx::MatMul_7357",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.23.self_attn.relative_k_proj.weight"
+    ],
+    "target": "onnx::MatMul_7358",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.23.self_attn.o_proj.weight"
+    ],
+    "target": "onnx::MatMul_7374",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1024,
+      4096
+    ],
+    "sources": [
+      "encoder.layers.23.feed_forward2.linear1.weight"
+    ],
+    "target": "onnx::MatMul_7380",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      4096,
+      1024
+    ],
+    "sources": [
+      "encoder.layers.23.feed_forward2.linear2.weight"
+    ],
+    "target": "onnx::MatMul_7381",
+    "transform": "transpose"
+  },
+  {
+    "graph": "encoder",
+    "shape": [
+      1,
+      9999,
+      1024
+    ],
+    "sources": [],
+    "target": "onnx::Slice_780",
+    "transform": "position"
+  },
+  {
+    "graph": "decoder",
+    "shape": [
+      8193,
+      640
+    ],
+    "sources": [
+      "decoder.embedding.weight"
+    ],
+    "target": "decoder.prediction.embed.weight",
+    "transform": "identity"
+  },
+  {
+    "graph": "decoder",
+    "shape": [
+      640
+    ],
+    "sources": [
+      "decoder.decoder_projector.bias"
+    ],
+    "target": "joint.pred.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "decoder",
+    "shape": [
+      640
+    ],
+    "sources": [
+      "encoder_projector.bias"
+    ],
+    "target": "joint.enc.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "decoder",
+    "shape": [
+      8198
+    ],
+    "sources": [
+      "joint.head.bias"
+    ],
+    "target": "joint.joint_net.2.bias",
+    "transform": "identity"
+  },
+  {
+    "graph": "decoder",
+    "shape": [
+      1,
+      2560,
+      640
+    ],
+    "sources": [
+      "decoder.lstm.weight_ih_l0"
+    ],
+    "target": "onnx::LSTM_205",
+    "transform": "lstm"
+  },
+  {
+    "graph": "decoder",
+    "shape": [
+      1,
+      2560,
+      640
+    ],
+    "sources": [
+      "decoder.lstm.weight_hh_l0"
+    ],
+    "target": "onnx::LSTM_206",
+    "transform": "lstm"
+  },
+  {
+    "graph": "decoder",
+    "shape": [
+      1,
+      5120
+    ],
+    "sources": [
+      "decoder.lstm.bias_ih_l0",
+      "decoder.lstm.bias_hh_l0"
+    ],
+    "target": "onnx::LSTM_207",
+    "transform": "lstm_bias"
+  },
+  {
+    "graph": "decoder",
+    "shape": [
+      1,
+      2560,
+      640
+    ],
+    "sources": [
+      "decoder.lstm.weight_ih_l1"
+    ],
+    "target": "onnx::LSTM_225",
+    "transform": "lstm"
+  },
+  {
+    "graph": "decoder",
+    "shape": [
+      1,
+      2560,
+      640
+    ],
+    "sources": [
+      "decoder.lstm.weight_hh_l1"
+    ],
+    "target": "onnx::LSTM_226",
+    "transform": "lstm"
+  },
+  {
+    "graph": "decoder",
+    "shape": [
+      1,
+      5120
+    ],
+    "sources": [
+      "decoder.lstm.bias_ih_l1",
+      "decoder.lstm.bias_hh_l1"
+    ],
+    "target": "onnx::LSTM_227",
+    "transform": "lstm_bias"
+  },
+  {
+    "graph": "decoder",
+    "shape": [
+      1024,
+      640
+    ],
+    "sources": [
+      "encoder_projector.weight"
+    ],
+    "target": "onnx::MatMul_228",
+    "transform": "transpose"
+  },
+  {
+    "graph": "decoder",
+    "shape": [
+      640,
+      640
+    ],
+    "sources": [
+      "decoder.decoder_projector.weight"
+    ],
+    "target": "onnx::MatMul_229",
+    "transform": "transpose"
+  },
+  {
+    "graph": "decoder",
+    "shape": [
+      640,
+      8198
+    ],
+    "sources": [
+      "joint.head.weight"
+    ],
+    "target": "onnx::MatMul_230",
+    "transform": "transpose"
+  }
+]

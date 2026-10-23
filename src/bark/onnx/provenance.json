@@ -1,0 +1,19 @@
+{
+  "source_repository": "istupakov/parakeet-tdt-0.6b-v3-onnx",
+  "source_revision": "8f23f0c03c8761650bdb5b40aaf3e40d2c15f1ce",
+  "original_sha256": {
+    "encoder-model.onnx": "98a74b21b4cc0017c1e7030319a4a96f4a9506e50f0708f3a516d02a77c96bb1",
+    "decoder_joint-model.onnx": "e978ddf6688527182c10fde2eb4b83068421648985ef23f7a86be732be8706c1"
+  },
+  "template_sha256": {
+    "encoder.onnx": "09c2cce2b71ab05d5592b13e4865e05c7496c9bb7eaad5ed2bec15a714342dc6",
+    "decoder.onnx": "aac3a61ffc9bd21c661b6923c3d15027040c4ceaaabb581cf90b072971a57d53",
+    "bindings.json": "24d2f6d03375a9748858363dee5762a00a97df1be6a42d664df7ddc866dab88c"
+  },
+  "opset": 17,
+  "bindings": 626,
+  "bark_source_tensors": 699,
+  "retained_pretrained_weight_bytes": 0,
+  "position_encoding": "Generated in Rust; not stored in template",
+  "generator": "examples/prepare_bark_onnx.rs"
+}

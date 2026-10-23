@@ -4,3 +4,7 @@ target/
 *.onnx.data
 *.npy
 qwen3-asr-0.6b-onnx-fp16/
+
+/work/
+
+!src/bark/onnx/*.onnx

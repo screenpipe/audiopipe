@@ -632,7 +632,7 @@ impl Engine for ParakeetEngine {
 }
 
 /// Frame-by-frame TDT greedy decode.
-fn greedy_tdt_decode(
+pub(crate) fn greedy_tdt_decode(
     decoder: &mut ort::session::Session,
     encoder_out: &Array3<f32>,
     vocab_size: usize,

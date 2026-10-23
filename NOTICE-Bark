@@ -1,0 +1,22 @@
+Underdog Bark 3.0 native loader, derived from the format documented by
+ConwayResearch/Underdog-Bark-3.0 at revision
+85db2ad18ab41e534a222ee253c29191d77ed919.
+
+Model and loader attribution:
+  NVIDIA Corporation, nvidia/parakeet-tdt-0.6b-v3
+  Moondream, moondream/parakeet-ultra
+  Conway Research / Underdog, post-training and compression
+License: Creative Commons Attribution 4.0
+https://creativecommons.org/licenses/by/4.0/
+
+Changes: native Rust ANS/XZ decoding and tensor layout conversion, integration
+with Screenpipe's existing audiopipe MLX implementation. No weights redistributed.
+
+ONNX architecture templates are derived from istupakov's conversion of NVIDIA
+Parakeet TDT 0.6B v3, revision 8f23f0c03c8761650bdb5b40aaf3e40d2c15f1ce:
+https://huggingface.co/istupakov/parakeet-tdt-0.6b-v3-onnx
+All learned initializers are removed. Audiopipe reconstructs every initializer
+from the attributed Bark weights (or generates sinusoidal positions in Rust).
+The Rust frontend follows the Parakeet processor algorithm documented by
+Hugging Face Transformers (Apache-2.0):
+https://github.com/huggingface/transformers/blob/main/src/transformers/models/parakeet/feature_extraction_parakeet.py

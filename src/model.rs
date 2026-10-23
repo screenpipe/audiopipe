@@ -17,7 +17,7 @@ use std::sync::{Arc, Condvar, Mutex, OnceLock};
 /// This lock ensures only ONE GPU transcription runs at any time across the entire
 /// process, regardless of which Model instance or thread initiates it.
 /// ONNX (CoreML/DirectML/CPU) and cloud API engines are NOT affected.
-static GPU_LOCK: Mutex<()> = Mutex::new(());
+pub(crate) static GPU_LOCK: Mutex<()> = Mutex::new(());
 
 /// Result of asking audiopipe to start a background model download.
 ///
@@ -155,6 +155,8 @@ fn pretrained_downloads() -> &'static DownloadCoordinator {
 /// an in-flight key or concurrent callers can still create duplicate download workers.
 fn pretrained_download_key(name: &str) -> &str {
     match name {
+        #[cfg(feature = "bark")]
+        "bark-3.0" => "bark-3.0-mlx",
         "qwen3-asr-antirez" => "qwen3-asr-0.6b-antirez",
         "qwen3-asr-0.6b-ggml-f16" => "qwen3-asr-0.6b-ggml",
         _ => name,
@@ -320,6 +322,7 @@ impl Model {
     /// Load a model by name. Downloads from HuggingFace if not cached.
     ///
     /// Supported models:
+    /// - `"bark-3.0-mlx"` — Underdog Bark 3.0 (English, native MLX)
     /// - `"parakeet-tdt-0.6b-v2"` — NVIDIA Parakeet TDT (English, 0.6B)
     /// - `"parakeet-tdt-0.6b-v3"` — NVIDIA Parakeet TDT (25 languages, 0.6B)
     /// - `"whisper-large-v3-turbo"` — OpenAI Whisper large-v3-turbo
@@ -331,6 +334,16 @@ impl Model {
                 inner: Box::new(TestPretrainedEngine::from_pretrained()),
                 uses_gpu: false,
             }),
+            #[cfg(feature = "bark-onnx")]
+            crate::bark::ONNX_MODEL_NAME => {
+                let engine = crate::bark::BarkOnnxEngine::from_pretrained(ParakeetExecutionProvider::legacy_default())?;
+                Ok(Self { inner: Box::new(engine), uses_gpu: false })
+            }
+            #[cfg(feature = "bark-mlx")]
+            crate::bark::MODEL_NAME => {
+                let engine = crate::bark::BarkEngine::from_pretrained()?;
+                Ok(Self { inner: Box::new(engine), uses_gpu: true })
+            }
             #[cfg(feature = "parakeet-mlx")]
             n if n.contains("mlx") && n.starts_with("parakeet") => {
                 let base_name = n.replace("-mlx", "");
@@ -383,12 +396,22 @@ impl Model {
     }
 
     /// Load a cached model with an explicit Parakeet execution-provider preference.
-    /// Non-Parakeet models ignore `provider`.
+    /// Applies to Parakeet and Bark ONNX models. Other models ignore `provider`.
     pub fn from_pretrained_cache_only_with_provider(
         name: &str,
         provider: ParakeetExecutionProvider,
     ) -> Result<Self> {
         match name {
+            #[cfg(feature = "bark-onnx")]
+            crate::bark::ONNX_MODEL_NAME => {
+                let engine = crate::bark::BarkOnnxEngine::from_pretrained_cache_only(provider)?;
+                Ok(Self { inner: Box::new(engine), uses_gpu: false })
+            }
+            #[cfg(feature = "bark-mlx")]
+            crate::bark::MODEL_NAME => {
+                let engine = crate::bark::BarkEngine::from_pretrained_cache_only()?;
+                Ok(Self { inner: Box::new(engine), uses_gpu: true })
+            }
             #[cfg(feature = "parakeet-mlx")]
             n if n.contains("mlx") && n.starts_with("parakeet") => {
                 let base_name = n.replace("-mlx", "");
@@ -459,6 +482,12 @@ impl Model {
         match name {
             #[cfg(test)]
             TEST_PRETRAINED_MODEL => TestPretrainedEngine::download_pretrained(),
+            #[cfg(feature = "bark-onnx")]
+            crate::bark::ONNX_MODEL_NAME => crate::bark::download()
+                .map(drop).map_err(|e| Error::Download(format!("{e:#}"))),
+            #[cfg(feature = "bark-mlx")]
+            crate::bark::MODEL_NAME => crate::bark::download()
+                .map(drop).map_err(|e| Error::Download(format!("{e:#}"))),
             #[cfg(feature = "parakeet-mlx")]
             n if n.contains("mlx") && n.starts_with("parakeet") => {
                 let base_name = n.replace("-mlx", "");
@@ -504,9 +533,19 @@ impl Model {
         pretrained_downloads().spawn_model(&name, move || Self::download_pretrained(&download_name))
     }
 
-    /// Load a model from a local directory containing ONNX files.
+    /// Load a model from a local directory containing the selected engine artifacts.
     pub fn from_dir(path: &std::path::Path, engine_type: &str) -> Result<Self> {
         match engine_type {
+            #[cfg(feature = "bark-onnx")]
+            "bark-onnx" => Ok(Self {
+                inner: Box::new(crate::bark::BarkOnnxEngine::from_dir(path, ParakeetExecutionProvider::legacy_default())?),
+                uses_gpu: false,
+            }),
+            #[cfg(feature = "bark-mlx")]
+            "bark-mlx" => Ok(Self {
+                inner: Box::new(crate::bark::BarkEngine::from_dir(path)?),
+                uses_gpu: true,
+            }),
             #[cfg(feature = "parakeet")]
             "parakeet" => {
                 let engine = crate::parakeet::ParakeetEngine::from_dir(path)?;
@@ -572,6 +611,9 @@ impl Model {
         sample_rate: u32,
         opts: TranscribeOptions,
     ) -> Result<TranscribeResult> {
+        if sample_rate == 0 {
+            return Err(Error::InvalidAudio("sample rate must be positive".into()));
+        }
         let _guard = self.acquire_gpu_lock();
         let resampled;
         let audio = if sample_rate == 16000 {
@@ -655,6 +697,11 @@ impl Model {
 #[cfg(test)]
 mod download_tests {
     use super::*;
+    #[test]
+    fn zero_sample_rate_is_rejected_before_resampling_or_engine_access() {
+        let mut model = Model { inner: Box::new(TestPretrainedEngine), uses_gpu: false };
+        assert!(matches!(model.transcribe_with_sample_rate(&[0.5], 0, TranscribeOptions::default()), Err(Error::InvalidAudio(_))));
+    }
     use std::collections::HashSet;
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::{mpsc, Barrier};

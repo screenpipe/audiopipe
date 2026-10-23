@@ -17,6 +17,8 @@ println!("{}", result.text);
 | Model | Backend | Params | Languages | Notes |
 |-------|---------|--------|-----------|-------|
 | `parakeet-tdt-0.6b-v3` | ONNX | 0.6B | 25 | NVIDIA Parakeet TDT. CoreML on macOS, CPU int8 fallback |
+| `bark-3.0` | ONNX Runtime | 0.6B | English | Native Bark weights, Windows DirectML or CPU fallback |
+| `bark-3.0-mlx` | MLX | 0.6B | English | Native ANS/XZ weights, 163 MB download; f32 runtime |
 | `parakeet-tdt-0.6b-v3-mlx` | MLX | 0.6B | 25 | Parakeet on Apple GPU. 8x faster than Whisper |
 | `qwen3-asr-0.6b-antirez` | Pure C | 0.6B | 6000+ | Fastest on CPU. BLAS + AVX2/NEON |
 | `qwen3-asr-0.6b-ggml` | GGML | 0.6B | 6000+ | Metal/Vulkan/CUDA GPU support |
@@ -33,6 +35,48 @@ audiopipe = { git = "https://github.com/screenpipe/audiopipe.git", features = ["
 ```
 
 ## Usage
+
+### Underdog Bark 3.0 (Windows / ONNX Runtime)
+
+```toml
+audiopipe = { git = "https://github.com/screenpipe/audiopipe.git", default-features = false, features = ["bark-onnx", "directml", "ort-defaults"] }
+```
+
+```rust
+use audiopipe::{Model, ParakeetExecutionProvider, TranscribeOptions};
+Model::download_pretrained("bark-3.0")?;
+let mut model = Model::from_pretrained_cache_only_with_provider(
+    "bark-3.0", ParakeetExecutionProvider::DirectMl,
+)?;
+let result = model.transcribe(&audio_f32, TranscribeOptions::default())?;
+println!("{:?}: {}", model.execution_provider(), result.text);
+```
+
+CPU is available without DirectML. DirectML initialization or inference failure
+recovers to CPU; `execution_provider()` reports the active session provider.
+The 163 MB `.bark` file is decoded in Rust and supplied as ONNX external
+initializers in memory. Small weight-free architecture graphs are embedded;
+no Python exporter, converted model cache or multi-GB Parakeet weight download
+is required. Weights expand to f32 in RAM. English only, without timestamps or
+contextual keyterm boosting. See [ONNX details and native validation](bench/bark/ONNX.md).
+
+### Underdog Bark 3.0 (Apple silicon)
+
+```toml
+audiopipe = { git = "https://github.com/screenpipe/audiopipe.git", default-features = false, features = ["bark-mlx"] }
+```
+
+```rust
+let mut model = audiopipe::Model::from_pretrained("bark-3.0-mlx")?;
+let result = model.transcribe(&audio_f32, audiopipe::TranscribeOptions::default())?;
+```
+
+The `.bark` file is decoded in Rust in process. English only; the 163 MB download
+expands to f32 weights in memory. Cache-only loads, background downloads and
+`Model::from_dir(path, "bark-mlx")` use the same model API as other engines.
+Word timestamps and contextual keyterm boosting are not implemented for Bark.
+See [Bark details and attribution](bench/bark/README.md) and the reproducible
+[GPU performance comparison](bench/bark/results/2026-10-22-m5-max-metal-repeat).
 
 ### Parakeet MLX (Apple Silicon GPU — fastest)
 

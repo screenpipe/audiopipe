@@ -26,10 +26,20 @@ whisper-rs = { git = "https://github.com/screenpipe/whisper-rs.git", rev = "97e4
 qwen3-asr-sys = { path = "crates/qwen3-asr-sys", optional = true }
 antirez-asr-sys = { path = "crates/antirez-asr-sys", optional = true }
 
+# Native Bark weight decoding, without a Python runtime.
+anyhow = { version = "1", optional = true }
+constriction = { version = "0.5", optional = true }
+lzma-rs = { version = "0.3", optional = true }
+sha2 = { version = "0.10", optional = true }
+
 [dev-dependencies]
 hound = "3"
 tracing-subscriber = "0.3"
 dirs = "6"
+libc = "0.2"
+onnx-protobuf = "0.2.3"
+# Must match the version used to generate onnx-protobuf sources.
+protobuf = "=3.4.0"
 
 [[example]]
 name = "transcribe"
@@ -76,9 +86,32 @@ qwen3-asr-ggml = ["dep:qwen3-asr-sys"]
 qwen3-asr-antirez = ["dep:antirez-asr-sys"]
 qwen3-asr-antirez-blas = ["qwen3-asr-antirez", "antirez-asr-sys/openblas"]
 parakeet-mlx = ["dep:mlx-rs", "dep:safetensors", "dep:half"]
+bark = ["dep:anyhow", "dep:constriction", "dep:lzma-rs", "dep:sha2", "dep:half"]
+bark-mlx = ["bark", "parakeet-mlx"]
+bark-onnx = ["bark", "parakeet"]
 all-models = ["whisper", "parakeet", "qwen3-asr"]
 
 # GGML GPU backends
 metal = ["qwen3-asr-ggml", "qwen3-asr-sys/metal"]
 vulkan-ggml = ["qwen3-asr-ggml", "qwen3-asr-sys/vulkan"]
 cuda-ggml = ["qwen3-asr-ggml", "qwen3-asr-sys/cuda"]
+
+[[example]]
+name = "bark_parakeet_bench"
+required-features = ["bark-mlx"]
+
+[[example]]
+name = "bark_weight_digests"
+required-features = ["bark"]
+
+[[example]]
+name = "prepare_bark_onnx"
+required-features = ["bark"]
+
+[[example]]
+name = "bark_onnx_bench"
+required-features = ["bark-onnx"]
+
+[[example]]
+name = "download_bark"
+required-features = ["bark-onnx"]

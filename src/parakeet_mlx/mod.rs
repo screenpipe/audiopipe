@@ -178,6 +178,9 @@ impl ParakeetMlxEngine {
     /// - `model.safetensors`
     /// - `vocab.txt` (one token per line)
     pub fn from_dir(dir: &Path, name: &str) -> Result<Self> {
+        // Downloading remains outside the lock. Serialize only model construction
+        // with Bark construction and Model inference.
+        let _guard = crate::model::GPU_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         // --- Load vocabulary from config.json → joint.vocabulary ---
         let config_path = dir.join("config.json");
         let vocab = if config_path.exists() {
