@@ -7,7 +7,11 @@ $ProgressPreference = 'SilentlyContinue'
 if ([Environment]::OSVersion.Platform -ne 'Win32NT') { throw 'This validation requires native Windows' }
 $repo = (git rev-parse --show-toplevel).Trim()
 Set-Location $repo
-$ResultDir = [IO.Path]::GetFullPath((Join-Path $repo $ResultDir))
+$ResultDir = if ([IO.Path]::IsPathRooted($ResultDir)) {
+  [IO.Path]::GetFullPath($ResultDir)
+} else {
+  [IO.Path]::GetFullPath((Join-Path $repo $ResultDir))
+}
 New-Item -ItemType Directory -Force -Path $ResultDir | Out-Null
 $previousBarkModelPath = $env:BARK_MODEL_PATH
 $result = [ordered]@{ state = 'running'; testedSha = (git rev-parse HEAD).Trim(); stages = @(); hardwareGpuBenchmark = $false }
@@ -19,7 +23,12 @@ function Run-Native([string] $Name, [string] $Program, [string[]] $Arguments, [b
   # leave unrelated descendants holding inherited handles, which makes the
   # validator hang even after cargo and its test binaries have exited. Wait on
   # the native process itself so its exit code remains authoritative.
-  $p = Start-Process -FilePath $exe -ArgumentList $Arguments -WorkingDirectory $repo -RedirectStandardOutput $out -RedirectStandardError $err -PassThru -NoNewWindow
+  $start = @{ FilePath = $exe; WorkingDirectory = $repo; RedirectStandardOutput = $out; RedirectStandardError = $err; PassThru = $true; NoNewWindow = $true }
+  if ($Arguments.Count -gt 0) { $start.ArgumentList = $Arguments }
+  $p = Start-Process @start
+  # Force .NET to retain the native process handle. Without this, long-running
+  # processes can finish before PowerShell opens it and ExitCode is then null.
+  [void] $p.Handle
   $p.WaitForExit()
   $script:result.stages += [ordered]@{ name = $Name; exitCode = $p.ExitCode; stdout = [IO.Path]::GetFileName($out); stderr = [IO.Path]::GetFileName($err) }
   if ($p.ExitCode -ne 0 -and -not $AllowFailure) { throw "$Name failed with native exit code $($p.ExitCode)" }

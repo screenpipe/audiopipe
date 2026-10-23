@@ -95,6 +95,8 @@ impl BarkOnnxEngine {
 }
 fn builder(provider: ParakeetExecutionProvider) -> Result<SessionBuilder> {
     let mut b = Session::builder()?
+        .with_no_environment_execution_providers()
+        .map_err(|e| Error::Other(e.to_string()))?
         .with_parallel_execution(false)
         .map_err(|e| Error::Other(e.to_string()))?
         .with_memory_pattern(false)
